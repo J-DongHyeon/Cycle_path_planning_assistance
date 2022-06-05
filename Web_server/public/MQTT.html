@@ -1,7 +1,7 @@
 <!DOCTYPE html>
 <html lang="ko">
 <meta charset="UTF-8">
-<title>MQTT Monitoring Service</title>
+<title>Cycle path planning assistance</title>
 <script src="/socket.io/socket.io.js"></script>
 <script src="https://code.jquery.com/jquery-3.3.1.min.js"></script>
 <script>
@@ -12,18 +12,12 @@
 			data = JSON.parse(data);
 			$(".mqttlist_temp").html('<li>'+data.tmp+'도.'+'</li>');
 		});
-		socket.on("socket_up_humi", function(data){
-			data = JSON.parse(data);
-			$(".mqttlist_humi").html('<li>'+data.humi+'%.'+'</li>');
-		});
-		socket.on("socket_up_pm", function(data){
-			data = JSON.parse(data);
-			$(".mqttlist_pm").html('<li>'+data.pm+'.'+'</li>');
-		});
+
 		if(timer==null){
 			timer = window.setInterval("timer_1()", 3000);
 		}
 	});
+
 	function timer_1(){
 		socket.emit("socket_evt_update", JSON.stringify({}));
 	}
@@ -36,7 +30,24 @@
 </script>
 </head>
 <body>
+	
 MQTT Mornitoring Service
+
+	<div id="map" style="width:1000px;height:500px;margin:auto auto;"></div>
+
+	<script type="text/javascript" src="//dapi.kakao.com/v2/maps/sdk.js?appkey=a73316532a6292cb5d9a5de529289d00"></script>
+
+	<script>
+		var container = document.getElementById('map');
+		var options = {
+			center: new kakao.maps.LatLng(37.8813153, 127.7299707),
+			level: 5
+		};
+
+		map = new kakao.maps.Map(container, options);
+	</script>
+
+<!--
 	<div id="msg">
 		<div id="mqtt_logs">
 			<ul class="mqttlist_temp"></ul>
@@ -46,6 +57,8 @@ MQTT Mornitoring Service
 			<button id="button2" onclick="button_off();"><b>LED OFF</b></button>			
 		</div>
 	</div>
+-->
+
 </body>
 </html>
 
