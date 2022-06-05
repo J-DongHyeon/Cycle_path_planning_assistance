@@ -35,20 +35,16 @@
   */
  var mqtt = require("mqtt");
 const { stringify } = require('querystring');
- var client = mqtt.connect("mqtt://127.0.0.1")
+ var mqtt_client = mqtt.connect("mqtt://127.0.0.1")
  
  // 접속에 성공하면, 3가지 토픽을 구독.
- client.on("connect", function(){
-   client.subscribe("tmp");
-   console.log("Subscribing tmp");
-   client.subscribe("humi");
-   console.log("Subscribing humi");
-   client.subscribe("pm");
-   console.log("Subscribing pm");
+ mqtt_client.on("connect", function(){
+   mqtt_client.subscribe("Latitude");
+   console.log("Subscribing Latitude");
  })
 
 // MQTT 응답 메세지 수신시 동작
-client.on("message", function(topic, message){
+mqtt_client.on("message", function(topic, message){
   console.log(topic+ ": " + message.toString()); // 수신한 메세지 Topic 출력
   var obj = JSON.parse(message); // 수신한 메세지의 데이터를 obj 저장
   obj.create_at = new Date(); // 현재 날짜 데이터를 obj에 추가함.
@@ -62,20 +58,6 @@ client.on("message", function(topic, message){
       else{console.log(JSON.stringify(result));}
     });
   }	
-  else if (topic == "humi"){ // 만약 토픽이 습도라면,
-    var cursor = dbObj.db("Resources").collection("Humidity");
-    cursor.insertOne(obj, function(err, result){
-      if(err){console.log(err);}
-      else{console.log(JSON.stringify(result));}
-    });
-  }
-  else if (topic == "pm"){ // 만약 토픽이 미세먼지라면,
-    var cursor = dbObj.db("Resources").collection("PM");
-    cursor.insertOne(obj, function(err, result){
-      if(err){console.log(err);}
-      else{console.log(JSON.stringify(result));}
-    });
-  }
 });
   
  // get data from MongDB and then send it to HTML page using socket
@@ -92,31 +74,14 @@ io.on("connection", function(socket){
         socket.emit("socket_up_temp", JSON.stringify(results[0]));
       }
     });
-    // 습도 데이터
-    var cursor = dbObj.db("Resources").collection("Humidity");
-    var options = {sort:{"_id":-1}, projection: {_id:0, humi:1, creat_at:1},};
-    var sending_data =cursor.find({},options).limit(1);
-    sending_data.toArray(function(err,results){
-      if(!err){
-        socket.emit("socket_up_humi", JSON.stringify(results[0]));
-      }
-    }); 
-    // 미세먼지 데이터
-    var cursor = dbObj.db("Resources").collection("PM");
-    var options = {sort:{"_id":-1}, projection: {_id:0, pm:1, creat_at:1},};
-    var sending_data =cursor.find({},options).limit(1);
-    sending_data.toArray(function(err,results){
-      if(!err){
-        socket.emit("socket_up_pm", JSON.stringify(results[0]));
-      }
-    }); 
+ 
   });
 
   // LED 버튼 입력 시 MQTT 정보 발행
   socket.on("socket_evt_bnt", function(data){
     console.log("MQTT Publish- LED control");
     console.log(data);
-    client.publish("led", data);
+    mqtt_client.publish("led", data);
   });
 
 
@@ -132,6 +97,8 @@ io.on("connection", function(socket){
       if(err){console.log(err);}
       else{console.log(JSON.stringify(result));}
     });
+
+    mqtt_client.publish("led", str);
     
 
   });
