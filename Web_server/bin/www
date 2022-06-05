@@ -23,7 +23,7 @@
  
  // Connect Mongo DB 
  var mongoDB = require("mongodb").MongoClient;
- var url = "mongodb://127.0.0.1:27017/IoTDB";
+ var url = "mongodb://127.0.0.1:27017";
  var dbObj = null;
  mongoDB.connect(url, function(err, db){
    dbObj = db;
@@ -119,9 +119,21 @@ io.on("connection", function(socket){
     client.publish("led", data);
   });
 
+
+  // html로부터 데이터를 받으면 DB에 저장하고 Mqtt로 publish
   socket.on("bt_input", function(data){
-    console.log(data[0]);
-    console.log(data[1]);
+
+    var str = "{\"path\": \"" + data[0] + " -> " + data[1] + "\" }";
+    var obj = JSON.parse(str);
+    obj.creat_at = new Date();
+    
+    var cursor = dbObj.db("Resources").collection("Search History");
+    cursor.insertOne(obj, function(err, result){
+      if(err){console.log(err);}
+      else{console.log(JSON.stringify(result));}
+    });
+    
+
   });
 
 });
