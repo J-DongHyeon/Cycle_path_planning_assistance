@@ -1,0 +1,51 @@
+<!DOCTYPE html>
+<html lang="ko">
+<meta charset="UTF-8">
+<title>MQTT Monitoring Service</title>
+<script src="/socket.io/socket.io.js"></script>
+<script src="https://code.jquery.com/jquery-3.3.1.min.js"></script>
+<script>
+	var socket = io.connect();
+	var timer = null;
+	$(document).ready(function(){
+		socket.on("socket_up_temp", function(data){
+			data = JSON.parse(data);
+			$(".mqttlist_temp").html('<li>'+data.tmp+'도.'+'</li>');
+		});
+		socket.on("socket_up_humi", function(data){
+			data = JSON.parse(data);
+			$(".mqttlist_humi").html('<li>'+data.humi+'%.'+'</li>');
+		});
+		socket.on("socket_up_pm", function(data){
+			data = JSON.parse(data);
+			$(".mqttlist_pm").html('<li>'+data.pm+'.'+'</li>');
+		});
+		if(timer==null){
+			timer = window.setInterval("timer_1()", 3000);
+		}
+	});
+	function timer_1(){
+		socket.emit("socket_evt_update", JSON.stringify({}));
+	}
+	function button_on(){
+		socket.emit("socket_evt_bnt", "ON");
+	}
+	function button_off(){
+		socket.emit("socket_evt_bnt", "OFF");
+	}
+</script>
+</head>
+<body>
+MQTT Mornitoring Service
+	<div id="msg">
+		<div id="mqtt_logs">
+			<ul class="mqttlist_temp"></ul>
+			<ul class="mqttlist_humi"></ul>
+			<ul class="mqttlist_pm"></ul>
+			<button id="button1" onclick="button_on();"><b>LED ON</b></button>
+			<button id="button2" onclick="button_off();"><b>LED OFF</b></button>			
+		</div>
+	</div>
+</body>
+</html>
+
