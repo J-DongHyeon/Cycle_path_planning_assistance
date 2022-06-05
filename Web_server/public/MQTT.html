@@ -27,11 +27,24 @@
 	function button_off(){
 		socket.emit("socket_evt_bnt", "OFF");
 	}
+
+	function bt_input(){
+		
+	}
+
 </script>
 </head>
 <body>
 	
-MQTT Mornitoring Service
+	<p>
+		&emsp;&emsp;&emsp;&emsp;출발지 : <input type="text" name="start" size="20"> 
+		&emsp;목적지 : <input type="text" name="destination" size="20"> 
+	
+		&emsp; <input type="button" name="bt_input" value="입력 완료" onclick="bt_input()" size="20">
+
+	
+	</p>
+	
 
 	<div id="map" style="width:1000px;height:500px;margin:auto auto;"></div>
 
