@@ -1,1 +1,6 @@
-버튼 클릭 시 출발지, 목적지 데이터를 html에서 http server로 socket을 통해 전송 --완료
+버튼 클릭 시 출발지, 목적지의 위도 경도 정보 구함 --완료
+(출발지, 목적지의 위도 경도 정보를 구하기 위해 kakao의 Geocoder를 이용함
+Geocoder를 이용하려면 services 라이브러리를 로드해야 함
+url로 kakao API 요청 시, &libraries=services 추가해야 됨)
+
+출발지, 목적지 정보와 그의 위도, 경도 정보를 html에서 http server로 socket을 통해 전송 --완료

@@ -85,8 +85,8 @@ io.on("connection", function(socket){
   });
 
 
-  // html로부터 데이터를 받으면 DB에 저장하고 Mqtt로 publish
-  socket.on("bt_input", function(data){
+  // html로부터 출발지, 목적지 데이터를 받으면 DB에 저장
+  socket.on("path_str", function(data){
 
     var str = "{\"path\": \"" + data[0] + " -> " + data[1] + "\" }";
     var obj = JSON.parse(str);
@@ -97,12 +97,13 @@ io.on("connection", function(socket){
       if(err){console.log(err);}
       else{console.log(JSON.stringify(result));}
     });
-
-    mqtt_client.publish("path", data[0] + ' -> ' + data[1]);
-    
-
   });
 
+  // html로부터 출발지, 목적지 위도, 경도 데이터를 받으면 Mqtt publish
+  socket.on("path_LatLng", function(data){
+    mqtt_client.publish("path", data[0] + ' ' + data[1] + ' ' + data[2] + ' ' + data[3]);
+
+  });
 });
  
  
@@ -168,4 +169,4 @@ io.on("connection", function(socket){
      : 'port ' + addr.port;
    debug('Listening on ' + bind);
  }
- 
+

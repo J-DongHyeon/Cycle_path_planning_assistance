@@ -21,21 +21,44 @@
 	function timer_1(){
 		socket.emit("socket_evt_update", JSON.stringify({}));
 	}
-	function button_on(){
-		socket.emit("socket_evt_bnt", "ON");
-	}
-	function button_off(){
-		socket.emit("socket_evt_bnt", "OFF");
-	}
 
-	// '입력완료' 버튼 클릭 시 http server에 socket으로 출발지, 목적지 전송
+	
+	// '입력완료' 버튼 클릭 시 http server에 socket으로 출발지, 목적지와 그의 위도, 경도 정보 전송
+	var path_LatLng = [];
 	function bt_input(){
-		var arr = [];
+		var path_str = [];
 
-		arr[0] = document.getElementById('start').value;
-		arr[1] = document.getElementById('destination').value;
+		path_str[0] = document.getElementById('start').value;
+		path_str[1] = document.getElementById('destination').value;
 
-		socket.emit("bt_input", arr);
+		socket.emit("path_str", path_str);
+
+
+		geocoder.addressSearch(path_str[0], function(result, status) {
+
+			if (status == kakao.maps.services.Status.OK) {
+				window.path_LatLng[0] = result[0].y;
+				window.path_LatLng[1] = result[0].x;
+				
+			}
+		});
+
+		geocoder.addressSearch(path_str[1], function(result, status) {
+
+			if (status == kakao.maps.services.Status.OK) {
+				window.path_LatLng[2] = result[0].y;
+				window.path_LatLng[3] = result[0].x;
+
+				socket.emit("path_LatLng", path_LatLng);
+				
+			}
+		});
+
+
+		
+
+
+
 	}
 
 </script>
@@ -46,14 +69,14 @@
 		&emsp;&emsp;&emsp;&emsp;출발지 : <input type="text" id="start" size="20"> 
 		&emsp;목적지 : <input type="text" id="destination" size="20"> 
 	
-		&emsp; <input type="button" name="bt_input" value="입력 완료" onclick="bt_input()" size="20">
+		&emsp; <input type="button" id="bt_input" value="입력 완료" onclick="bt_input()" size="20">
 	
 	</p>
 	
 
 	<div id="map" style="width:1000px;height:500px;margin:auto auto;"></div>
 
-	<script type="text/javascript" src="//dapi.kakao.com/v2/maps/sdk.js?appkey=a73316532a6292cb5d9a5de529289d00"></script>
+	<script type="text/javascript" src="//dapi.kakao.com/v2/maps/sdk.js?appkey=a73316532a6292cb5d9a5de529289d00&libraries=services"></script>
 
 	<script>
 		var container = document.getElementById('map');
@@ -62,7 +85,12 @@
 			level: 5
 		};
 
-		map = new kakao.maps.Map(container, options);
+		var map = new kakao.maps.Map(container, options);
+
+		var geocoder = new kakao.maps.services.Geocoder();
+
+		
+
 	</script>
 
 <!--

@@ -1,2 +1,2 @@
-http server는 html로부터 데이터를 받으면 DB에 저장 --완료
-또한 그 데이터를 Mqtt publish 함 --완료
+http server는 html로부터 데이터를 받고, 출발지 목적지 정보는 DB에 저장 
+출발지, 목적지의 위도 경도 데이터는 Mqtt publish 함 
