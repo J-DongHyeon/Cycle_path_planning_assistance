@@ -26,6 +26,7 @@
 	// '입력완료' 버튼 클릭 시 http server에 socket으로 출발지, 목적지와 그의 위도, 경도 정보 전송
 	var path_LatLng = []; //출발지, 목적지의 위도, 경도 정보를 담을 배열
 	var markers = []; //출발지, 목적지의 마커를 담을 배열
+	var polylines = []; //출발지, 목적지를 이을 선 (polyline) 을 담을 배열
 	function bt_input(){
 		var path_str = [];
 
@@ -91,12 +92,16 @@
 		}
 
 		function draw_line() {
+
+			if (polylines.length > 0)
+				polylines[0].setMap(null);
+
 			var linePath = [
 				new kakao.maps.LatLng(parseFloat(path_LatLng[0]), parseFloat(path_LatLng[1])),
 				new kakao.maps.LatLng(parseFloat(path_LatLng[2]), parseFloat(path_LatLng[3]))
 			];
 
-			var polyline = new kakao.maps.Polyline({
+			polylines[0] = new kakao.maps.Polyline({
 				path: linePath,
 				strokeWeight: 30,
 				strokeColor: '#33EE33',
@@ -104,7 +109,7 @@
 				strokeStyle: 'solid'
 			});
 
-			polyline.setMap(map);
+			polylines[0].setMap(map);
 
 		}
 
@@ -122,8 +127,30 @@
 	
 		&emsp; <input type="button" id="bt_input" value="입력 완료" onclick="bt_input()" size="20">
 	
+		<form>
+			<select class="select-time">
+				<option value="none">=== 시간 ===</option>
+				<option value="now">현재</option>
+			</select>
+		</form>
+
 	</p>
 	
+	<script>
+		var selectTime = document.querySelector('.select-time');
+
+		var sub_option = ['3시간 이후', '6시간 이후', '9시간 이후', '12시간 이후', '15시간 이후', '18시간 이후', '21시간 이후', '24시간 이후',
+		'27시간 이후', '30시간 이후', '33시간 이후', '36시간 이후', '39시간 이후', '42시간 이후', '45시간 이후', '48시간 이후', '51시간 이후',
+		'54시간 이후']
+
+		var i;
+		for (i=0; i < sub_option.length; i++) {
+			var option = document.createElement('option');
+			option.innerText = sub_option[i];
+			selectTime.append(option);
+		}
+
+	</script>
 
 	<div id="map" style="width:1000px;height:500px;margin:auto auto;"></div>
 
@@ -139,9 +166,6 @@
 		var map = new kakao.maps.Map(container, options);
 
 		var geocoder = new kakao.maps.services.Geocoder();
-
-	
-		
 
 	</script>
 
