@@ -24,9 +24,11 @@
 
 	
 	// '입력완료' 버튼 클릭 시 http server에 socket으로 출발지, 목적지와 그의 위도, 경도 정보 전송
+	// 시간 정보도 전송
 	var path_LatLng = []; //출발지, 목적지의 위도, 경도 정보를 담을 배열
 	var markers = []; //출발지, 목적지의 마커를 담을 배열
 	var polylines = []; //출발지, 목적지를 이을 선 (polyline) 을 담을 배열
+
 	function bt_input(){
 		var path_str = [];
 
@@ -35,12 +37,15 @@
 
 		socket.emit("path_str", path_str);
 
+		var selected_item = document.getElementById("select-time");
+		window.path_LatLng[0] = selected_item.options[selected_item.selectedIndex].value;
+		
 
 		geocoder.addressSearch(path_str[0], function(result, status) {
 
 			if (status == kakao.maps.services.Status.OK) {
-				window.path_LatLng[0] = result[0].y;
-				window.path_LatLng[1] = result[0].x;
+				window.path_LatLng[1] = result[0].y;
+				window.path_LatLng[2] = result[0].x;
 				
 			}
 		});
@@ -48,8 +53,8 @@
 		geocoder.addressSearch(path_str[1], function(result, status) {
 
 			if (status == kakao.maps.services.Status.OK) {
-				window.path_LatLng[2] = result[0].y;
-				window.path_LatLng[3] = result[0].x;
+				window.path_LatLng[3] = result[0].y;
+				window.path_LatLng[4] = result[0].x;
 
 				socket.emit("path_LatLng", path_LatLng);
 
@@ -67,8 +72,8 @@
 		function setBounds() {
 
 			var points = [
-				new kakao.maps.LatLng(parseFloat(path_LatLng[0]), parseFloat(path_LatLng[1])),
-				new kakao.maps.LatLng(parseFloat(path_LatLng[2]), parseFloat(path_LatLng[3]))
+				new kakao.maps.LatLng(parseFloat(path_LatLng[1]), parseFloat(path_LatLng[2])),
+				new kakao.maps.LatLng(parseFloat(path_LatLng[3]), parseFloat(path_LatLng[4]))
 			];
 
 			var bounds = new kakao.maps.LatLngBounds();
@@ -97,8 +102,8 @@
 				polylines[0].setMap(null);
 
 			var linePath = [
-				new kakao.maps.LatLng(parseFloat(path_LatLng[0]), parseFloat(path_LatLng[1])),
-				new kakao.maps.LatLng(parseFloat(path_LatLng[2]), parseFloat(path_LatLng[3]))
+				new kakao.maps.LatLng(parseFloat(path_LatLng[1]), parseFloat(path_LatLng[2])),
+				new kakao.maps.LatLng(parseFloat(path_LatLng[3]), parseFloat(path_LatLng[4]))
 			];
 
 			polylines[0] = new kakao.maps.Polyline({
@@ -128,7 +133,7 @@
 		&emsp; <input type="button" id="bt_input" value="입력 완료" onclick="bt_input()" size="20">
 	
 		<form>
-			<select class="select-time">
+			<select id="select-time" class="select-time">
 				<option value="none">=== 시간 ===</option>
 				<option value="now">현재</option>
 			</select>

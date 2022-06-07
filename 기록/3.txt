@@ -8,3 +8,5 @@ url로 kakao API 요청 시, &libraries=services 추가해야 됨)
 출발지, 목적지 간에 긴 선 표현하기 --완료
 
 출발지, 목적지 정보와 그의 위도, 경도 정보를 html에서 http server로 socket을 통해 전송 --완료
+
+콤보 박스의 내용도 http server로 socket을 통해 전송 --완료
