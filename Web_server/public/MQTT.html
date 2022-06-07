@@ -24,7 +24,8 @@
 
 	
 	// '입력완료' 버튼 클릭 시 http server에 socket으로 출발지, 목적지와 그의 위도, 경도 정보 전송
-	var path_LatLng = [];
+	var path_LatLng = []; //출발지, 목적지의 위도, 경도 정보를 담을 배열
+	var markers = []; //출발지, 목적지의 마커를 담을 배열
 	function bt_input(){
 		var path_str = [];
 
@@ -50,14 +51,64 @@
 				window.path_LatLng[3] = result[0].x;
 
 				socket.emit("path_LatLng", path_LatLng);
+
+				setBounds();
+
+				draw_line();
 				
 			}
 		});
 
+//		const vv = document.getElementById('bt_input');
+//		vv.value = '123';
+
+
+		function setBounds() {
+
+			var points = [
+				new kakao.maps.LatLng(parseFloat(path_LatLng[0]), parseFloat(path_LatLng[1])),
+				new kakao.maps.LatLng(parseFloat(path_LatLng[2]), parseFloat(path_LatLng[3]))
+			];
+
+			var bounds = new kakao.maps.LatLngBounds();
+
+			for (i=0; i<markers.length; i++) {
+				markers[i].setMap(null);
+			}
+
+			var i;
+			for (i=0; i<points.length; i++) {
+				markers[i] = new kakao.maps.Marker({ position : points[i] });
+				markers[i].setMap(map);
+
+				bounds.extend(points[i]);
+			}
+
+
+			map.setBounds(bounds);
+			
+
+		}
+
+		function draw_line() {
+			var linePath = [
+				new kakao.maps.LatLng(parseFloat(path_LatLng[0]), parseFloat(path_LatLng[1])),
+				new kakao.maps.LatLng(parseFloat(path_LatLng[2]), parseFloat(path_LatLng[3]))
+			];
+
+			var polyline = new kakao.maps.Polyline({
+				path: linePath,
+				strokeWeight: 30,
+				strokeColor: '#33EE33',
+				strokeOpacity: 0.5,
+				strokeStyle: 'solid'
+			});
+
+			polyline.setMap(map);
+
+		}
 
 		
-
-
 
 	}
 
@@ -89,6 +140,7 @@
 
 		var geocoder = new kakao.maps.services.Geocoder();
 
+	
 		
 
 	</script>

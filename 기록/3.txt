@@ -3,4 +3,8 @@
 Geocoder를 이용하려면 services 라이브러리를 로드해야 함
 url로 kakao API 요청 시, &libraries=services 추가해야 됨)
 
+지도의 크기를 출발지, 목적지에 맞추고, 출발지와 목적지에 마커 표시 --완료
+
+출발지, 목적지 간에 긴 선 표현하기 --완료
+
 출발지, 목적지 정보와 그의 위도, 경도 정보를 html에서 http server로 socket을 통해 전송 --완료
