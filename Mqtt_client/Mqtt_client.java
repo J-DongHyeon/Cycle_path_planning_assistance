@@ -1,6 +1,7 @@
 package MiniProject;
 
 import org.eclipse.paho.client.mqttv3.IMqttDeliveryToken;
+
 import org.eclipse.paho.client.mqttv3.MqttCallback;
 import org.eclipse.paho.client.mqttv3.MqttClient;
 import org.eclipse.paho.client.mqttv3.MqttConnectOptions;
@@ -15,55 +16,36 @@ import org.jsoup.nodes.Document;
 import org.jsoup.nodes.Element;
 import org.jsoup.select.Elements;
 
-public class Mqtt_client implements MqttCallback{ // implement callback Ãß°¡ & ÇÊ¿äÇÑ ¸Ş¼Òµå Á¤ÀÇ
-	static MqttClient sampleClient;// Mqtt Client °´Ã¼ ¼±¾ğ
+import java.util.Arrays;
+
+public class Mqtt_client implements MqttCallback{ // implement callback ì¶”ê°€ & í•„ìš”í•œ ë©”ì†Œë“œ ì •ì˜
+	static MqttClient mqtt_client;// Mqtt Client ê°ì²´ ì„ ì–¸
 	
     public static void main(String[] args) {
     	Mqtt_client obj = new Mqtt_client();
     	obj.run();
     }
     public void run() {    	
-    	connectBroker(); // ºê·ÎÄ¿ ¼­¹ö¿¡ Á¢¼Ó
-    	try { // ¿©±â Ãß°¡
-    		sampleClient.subscribe("led"); // LED ¸®¼Ò½º ±¸µ¶
+    	connectBroker(); // ë¸Œë¡œì»¤ ì„œë²„ì— ì ‘ì†
+    	try { 
+    		mqtt_client.subscribe("path"); // path ë¦¬ì†ŒìŠ¤ êµ¬ë…
 		} catch (MqttException e1) {
 			// TODO Auto-generated catch block
 			e1.printStackTrace();
 		}
-    	while(true) {
-    		try {
-    			String[] weather_data  = get_weather_data(); // °ø°ø API
-    	       	String pm_data = get_pm_data(); // °ø°ø API
-    	       	publish_data("tmp", "{\"tmp\": "+weather_data[0]+"}"); // ¿Âµµ µ¥ÀÌÅÍ ¹ßÇà
-    	       	publish_data("humi", "{\"humi\": "+weather_data[1]+"}"); // ½Àµµ µ¥ÀÌÅÍ ¹ßÇà
-    	       	publish_data("pm", "{\"pm\": "+pm_data+"}"); // ¹Ì¼¼¸ÕÁö µ¥ÀÌÅÍ ¹ßÇà
-    	       	Thread.sleep(5000); // @@@@@@
-    		}catch (Exception e) {
-				// TODO: handle exception
-    			try {
-    				sampleClient.disconnect();
-				} catch (MqttException e1) {
-					// TODO Auto-generated catch block
-					e1.printStackTrace();
-				}
-    			e.printStackTrace();
-    	        System.out.println("Disconnected");
-    	        System.exit(0);
-			}
-    	}
     }
     
     public void connectBroker() {
-        String broker = "tcp://127.0.0.1:1883"; // ºê·ÎÄ¿ ¼­¹öÀÇ ÁÖ¼Ò 
-        String clientId = "practice"; // Å¬¶óÀÌ¾ğÆ®ÀÇ ID
+        String broker = "tcp://127.0.0.1:1883"; // ë¸Œë¡œì»¤ ì„œë²„ì˜ ì£¼ì†Œ 
+        String clientId = "weather publisher"; // í´ë¼ì´ì–¸íŠ¸ì˜ ID
         MemoryPersistence persistence = new MemoryPersistence();
         try {
-            sampleClient = new MqttClient(broker, clientId, persistence);// Mqtt Client °´Ã¼ ÃÊ±âÈ­
-            MqttConnectOptions connOpts = new MqttConnectOptions(); // Á¢¼Ó½Ã Á¢¼ÓÀÇ ¿É¼ÇÀ» Á¤ÀÇÇÏ´Â °´Ã¼ »ı¼º
+            mqtt_client = new MqttClient(broker, clientId, persistence);// Mqtt Client ê°ì²´ ì´ˆê¸°í™”
+            MqttConnectOptions connOpts = new MqttConnectOptions(); // ì ‘ì†ì‹œ ì ‘ì†ì˜ ì˜µì…˜ì„ ì •ì˜í•˜ëŠ” ê°ì²´ ìƒì„±
             connOpts.setCleanSession(true);
             System.out.println("Connecting to broker: "+broker);
-            sampleClient.connect(connOpts); // ºê·ÎÄ¿¼­¹ö¿¡ Á¢¼Ó
-            sampleClient.setCallback(this);// Call back option Ãß°¡
+            mqtt_client.connect(connOpts); // ë¸Œë¡œì»¤ì„œë²„ì— ì ‘ì†
+            mqtt_client.setCallback(this);// Call back option ì¶”ê°€
             System.out.println("Connected");
         } catch(MqttException me) {
             System.out.println("reason "+me.getReasonCode());
@@ -75,12 +57,12 @@ public class Mqtt_client implements MqttCallback{ // implement callback Ãß°¡ & Ç
         }
     }
     
-    public void publish_data(String topic_input, String data) { // @@@@@ ½ºÅÂÆ½ Á¦°Å
-        String topic = topic_input; // ÅäÇÈ
+    public void publish_data(String topic_input, String data) { 
+        String topic = topic_input; // í† í”½
         int qos = 0; // QoS level
         try {
             System.out.println("Publishing message: "+data);
-            sampleClient.publish(topic, data.getBytes(), qos, false); // topic, µ¥ÀÌÅÍ¸¦ byte·Î º¯È¯ÇÏ¿© Àü¼Û, qos level, retain bit
+            mqtt_client.publish(topic, data.getBytes(), qos, false); // topic, ë°ì´í„°ë¥¼ byteë¡œ ë³€í™˜í•˜ì—¬ ì „ì†¡, qos level, retain bit
             System.out.println("Message published");
         } catch(MqttException me) {
             System.out.println("reason "+me.getReasonCode());
@@ -92,78 +74,315 @@ public class Mqtt_client implements MqttCallback{ // implement callback Ãß°¡ & Ç
         }
     }
     
-    public String[] get_weather_data() { // @@@@@ ½ºÅÂÆ½ Á¦°Å
-    	// ÇöÀç ½Ã°£ È®ÀÎÇØ¼­ ³¯Â¥, ½Ã°£ ÀúÀå
+    public double[][] get_weather_data(String[] time_lat_lng) {
+    	
+    	String plus_time = time_lat_lng[0];
+    	double [] start_lat_lng = {Double.parseDouble(time_lat_lng[1]), Double.parseDouble(time_lat_lng[2])};
+    	double [] dest_lat_lng = {Double.parseDouble(time_lat_lng[3]), Double.parseDouble(time_lat_lng[4])};
+    	int [] start_xy = get_xy(start_lat_lng);
+    	int [] dest_xy = get_xy(dest_lat_lng);
+
+    	
+    	int x_interval = Math.abs(start_xy[0] - dest_xy[0]);
+    	int y_interval = Math.abs(start_xy[1] - dest_xy[1]);
+    	
+    	//ì¶œë°œì§€ì™€ ëª©ì ì§€ ì‚¬ì´ì˜ ì¼ì •í•œ ê°„ê²© ì¢Œí‘œë“¤ì„ êµ¬í•  ê²ƒì´ë‹¤. ê±°ë¦¬ê°€ ë„ˆë¬´ ë©€ë©´ 8ê°œ ì¢Œí‘œë¡œ ì œí•œí•œë‹¤.
+    	int [][] nx_ny = new int[9][2];
+    	nx_ny[0][0] = start_xy[0]; nx_ny[0][1] = start_xy[1];
+    	
+    	//ì¶œë°œì§€ ì¢Œí‘œê°€ ëª©ì ì§€ ì¢Œí‘œë³´ë‹¤ ë” í´ìˆ˜ë„ ìˆê³  ì‘ì„ìˆ˜ë„ ìˆë‹¤.
+    	//ì¦‰, ì¤‘ê°„ ì¢Œí‘œë“¤ì€ ì¶œë°œì§€ ì¢Œí‘œë¡œë¶€í„° ì ì  ì¦ê°€í•  ìˆ˜ë„ ìˆê³  ê°ì†Œí•  ìˆ˜ë„ ìˆë‹¤. 
+    	int x_flag, y_flag;
+    	if (start_xy[0] < dest_xy[0]) x_flag = 1;
+    	else x_flag = -1;
+    	
+    	if (start_xy[1] < dest_xy[1]) y_flag = 1;
+    	else y_flag = -1;
+    	
+    	//ì¶œë°œì§€ì™€ ëª©ì ì§€ ê°„ì˜ xì¢Œí‘œ ê°„ê²©ì´ yì¢Œí‘œ ê°„ê²©ë³´ë‹¤ í¬ë©´ xì¢Œí‘œ ê°„ê²©ì„ ê¸°ì¤€ìœ¼ë¡œ ë°˜ë³µë¬¸ì„ ëŒë ¤ ì¤‘ê°„ ì¢Œí‘œë“¤ì„ êµ¬í•œë‹¤.
+    	//yì¢Œí‘œëŠ” xì¢Œí‘œ ì¦ê°€ëŸ‰ì— ë¹„ë¡€í•˜ì—¬ ì¦ê°€í•œë‹¤.
+    	//ë°˜ëŒ€ì˜ ê²½ìš°ëŠ” yì¢Œí‘œë¥¼ ê¸°ì¤€ìœ¼ë¡œ ì¤‘ê°„ ì¢Œí‘œë“¤ì„ êµ¬í•œë‹¤.
+    	if ((x_interval < 8) && (y_interval < 8)) {
+    		if (x_interval > y_interval) {
+    			for(int i=1, j=0; i<=x_interval; i++) {
+    				nx_ny[i][0] = start_xy[0] + (i*x_flag);
+    				if (((double)i / x_interval) > ((double)j / y_interval)) {
+    					nx_ny[i][1] = start_xy[1] + ((++j)*y_flag);
+    				} else {
+    					nx_ny[i][1] = start_xy[1] + (j*y_flag);
+    				}	
+    			}
+    		} else {
+    			for(int i=1, j=0; i<=y_interval; i++) {
+    				nx_ny[i][1] = start_xy[1] + (i*y_flag);
+    				if (((double)i / y_interval) > ((double)j / x_interval)) {
+    					nx_ny[i][0] = start_xy[0] + ((++j)*x_flag);
+    				} else {
+    					nx_ny[i][0] = start_xy[0] + (j*x_flag);
+    				}	
+    			}
+    		}
+    	} else if ((x_interval >= 8) && (y_interval < 8)) {
+    		double sub_interval = (double)x_interval / 8;
+    		double base_nx;
+    		for(int i=1, j=0; i<=8; i++) {
+				base_nx = start_xy[0] + ((i*sub_interval)*x_flag);
+				nx_ny[i][0] = (int) base_nx;
+				if (((double)i / 8) > ((double)j / y_interval)) {
+					nx_ny[i][1] = start_xy[1] + ((++j)*y_flag);
+				} else {
+					nx_ny[i][1] = start_xy[1] + (j*y_flag);
+				}	
+			}
+    	} else if ((x_interval < 8) && (y_interval >= 8)) {
+    		double sub_interval = (double)y_interval / 8;
+    		double base_ny;
+    		for(int i=1, j=0; i<=8; i++) {
+				base_ny = start_xy[1] + ((i*sub_interval)*y_flag);
+				nx_ny[i][1] = (int) base_ny;
+				if (((double)i / 8) > ((double)j / x_interval)) {
+					nx_ny[i][0] = start_xy[0] + ((++j)*x_flag);
+				} else {
+					nx_ny[i][0] = start_xy[0] + (j*x_flag);
+				}	
+			}
+    	} else {
+    		double sub_x_interval = (double)x_interval / 8;
+    		double sub_y_interval = (double)y_interval / 8;
+    		double base_nx;
+    		double base_ny;
+    		for(int i=1; i<=8; i++) {
+				base_nx = start_xy[0] + ((i*sub_x_interval)*x_flag);
+				base_ny = start_xy[1] + ((i*sub_y_interval)*y_flag);
+				nx_ny[i][0] = (int) base_nx;
+				nx_ny[i][1] = (int) base_ny;		
+			}
+    	}
+    	
+    	/*
+    	System.out.println(start_xy[0] + " " + start_xy[1] + " " + dest_xy[0] + " " + dest_xy[1]);
+    	for(int i=0; i<9; i++) {
+    		System.out.println(Arrays.toString(nx_ny[i]));
+    	}
+    	*/
+    
+    	
+    	// í˜„ì¬ ì‹œê°„ í™•ì¸í•´ì„œ ë‚ ì§œ, ì‹œê°„ ì €ì¥
     	Date current = new Date(System.currentTimeMillis());
     	SimpleDateFormat d_format = new SimpleDateFormat("yyyyMMddHHmmss"); 
-    	//System.out.println(d_format.format(current));
-    	String date = d_format.format(current).substring(0,8); // ³¯Â¥
-    	String time = d_format.format(current).substring(8,10); // ½Ã°£
-       	
-    	String url = "http://apis.data.go.kr/1360000/VilageFcstInfoService_2.0/getUltraSrtNcst" // https°¡ ¾Æ´Ñ http ÇÁ·ÎÅäÄİÀ» ÅëÇØ Á¢±ÙÇØ¾ß ÇÔ.
-    			+ "?serviceKey=X7VbxDZo%2F8scobmS5QUIF2h6s%2F2FVu4HbJ%2BSa2x31kXEuRx8j48OX79kZ4kGJ9F6jl7ef6Haq4SD2sK8t3Entw%3D%3D"
-    			+ "&pageNo=1&numOfRows=1000"
-    			+ "&dataType=XML"
-    			+ "&base_date="+date
-    			+ "&base_time="+time+"00"
-    			+ "&base_time="+time+"00"
-    			+ "&nx=73"
-    			+ "&ny=134";
+    	int inow_date = Integer.parseInt(d_format.format(current).substring(0,8)); //ë‚ ì§œ
+    	int ibase_date = inow_date;
+    	String now_time = d_format.format(current).substring(8,12); //ì‹œê°„
+    	String base_time = now_time;
     	
-    	//µ¥ÀÌÅÍ¸¦ ÀúÀåÇÒ º¯¼ö ÃÊ±âÈ­
-		String temp = "-99"; //µ¥ÀÌÅÍ¸¦ Àß ¸ø°¡Á®¿À´Â °æ¿ì (ex Á¤°¢¿¡ µ¥ÀÌÅÍ¸¦ °¡Á®¿À´Â °æ¿ì) ÀÌ µğÆúÆ® °ªÀ» »ç¿ë
-		String humi = "-99";
-				
-    	Document doc = null;
-		
-		// JsoupÀ¸·Î API µ¥ÀÌÅÍ °¡Á®¿À±â
-		try {
-			doc = Jsoup.connect(url).get();
-		} catch (IOException e) {
-			e.printStackTrace();
-		}
-		//System.out.println(doc);
-		
-		Elements elements = doc.select("item");
-		for (Element e : elements) {
-			if (e.select("category").text().equals("T1H")) { // ±â¿Âµ¥ÀÌÅÍ
-				temp = e.select("obsrValue").text();
-			}
-			if (e.select("category").text().equals("REH")) { // ½Àµµ
-				humi = e.select("obsrValue").text();
-			}
-		}
-		String[] out = {temp, humi};
-    	return out;
+    	if ((base_time.compareTo("0215") >= 0) && (base_time.compareTo("0515") < 0)) base_time = "0200";
+    	else if ((base_time.compareTo("0515") >= 0) && (base_time.compareTo("0815") < 0)) base_time = "0500";
+    	else if ((base_time.compareTo("0815") >= 0) && (base_time.compareTo("1115") < 0)) base_time = "0800";
+    	else if ((base_time.compareTo("1115") >= 0) && (base_time.compareTo("1415") < 0)) base_time = "1100";
+    	else if ((base_time.compareTo("1415") >= 0) && (base_time.compareTo("1715") < 0)) base_time = "1400";
+    	else if ((base_time.compareTo("1715") >= 0) && (base_time.compareTo("2015") < 0)) base_time = "1700";
+    	else if ((base_time.compareTo("2015") >= 0) && (base_time.compareTo("2315") < 0)) base_time = "2000";
+    	else if ((base_time.compareTo("2315") >= 0) && (base_time.compareTo("2400") < 0)) base_time = "2300";
+    	else if ((base_time.compareTo("0000") >= 0) && (base_time.compareTo("0215") < 0)) {
+    		base_time = "2300"; ibase_date--;
+    	}
+    	
+    	String base_date = String.valueOf(ibase_date);
+    	
+    	//ê³µê³µ API ë°ì´í„°ë¥¼ ì–»ê³ ì í•˜ëŠ” ë‚ ì§œ, ì‹œê°„ì„ êµ¬í•œë‹¤. (fcst_date, fcst_time)
+    	
+    	String fcst_date = String.valueOf(inow_date);
+    	String fcst_time = now_time.substring(0, 2) + "00";
+    	if (!plus_time.equals("now") && !plus_time.equals("none")) {
+    		int iplus_time = 0;
+    		
+    		if (plus_time.length() == 4) {
+        		iplus_time = plus_time.charAt(0) - '0';
+        	} else if (plus_time.length() == 5) {
+        		iplus_time = Integer.parseInt(plus_time.substring(0, 2));
+        	}
+    		
+    		int sum = Integer.parseInt(now_time.substring(0, 2)) + iplus_time;
+    		if (sum / 24 > 0) {
+    			fcst_date = String.valueOf(inow_date + (sum / 24));
+    		}
+    		fcst_time = String.valueOf(sum % 24) + "00";
+    		if (fcst_time.length() == 3) fcst_time = "0" + fcst_time;
+    	}
+    
+    
+    	
+    	
+
+    	double[][] result = new double [9][6]; // { xì¢Œí‘œ, yì¢Œí‘œ, tmp, vec, wsd, pop } 
+    	
+    	for (int i=0; i<nx_ny.length; i++) {
+    		if (nx_ny[i][0] == 0) break;
+    		
+    		result[i][0] = nx_ny[i][0];
+    		result[i][1] = nx_ny[i][1];
+    		
+    		String nx = String.valueOf(nx_ny[i][0]);
+    		String ny = String.valueOf(nx_ny[i][1]);
+    		
+        	String url = "http://apis.data.go.kr/1360000/VilageFcstInfoService_2.0/getVilageFcst" // httpsê°€ ì•„ë‹Œ http í”„ë¡œí† ì½œì„ í†µí•´ ì ‘ê·¼í•´ì•¼ í•¨.
+        			+ "?serviceKey=Lcm5d0LdcOf0ikmOlbmHQkrgM%2Fe%2Bl8laBOhOhXB4n9q8cOvOFyhnFvwKclSTvc%2BK3rll9BgV0dfGF9mdgnJGQA%3D%3D"
+        			+ "&pageNo=1&numOfRows=1000"
+        			+ "&dataType=XML"
+        			//+ "&base_date=20220608"
+        			//+ "&base_time=0500"
+        			+ "&base_date="+base_date
+        			+ "&base_time="+base_time
+        			+ "&nx=" + nx
+        			+ "&ny=" + ny;
+        	
+        	System.out.println(base_date +  "--" + base_time);
+        	System.out.println(fcst_date +  "--" + fcst_time);
+    				
+        	Document doc = null;
+    		
+    		// Jsoupìœ¼ë¡œ API ë°ì´í„° ê°€ì ¸ì˜¤ê¸°
+    		try {
+    			doc = Jsoup.connect(url).get();
+    		} catch (IOException e) {
+    			e.printStackTrace();
+    		}
+    		//tmp, pop, vec, wsd
+    		Elements elements = doc.select("item");
+    		for (Element e : elements) {
+    			if (e.select("fcstDate").text().equals(fcst_date) && e.select("fcstTime").text().equals(fcst_time)) {
+    				if (e.select("category").text().equals("TMP")) {
+    					result[i][2] = Double.parseDouble(e.select("fcstValue").text());
+    					System.out.println("tmp : " + e.select("fcstValue").text());
+    				}
+    				else if (e.select("category").text().equals("VEC")) {
+    					result[i][3] = Double.parseDouble(e.select("fcstValue").text());
+    					System.out.println("vec : " + e.select("fcstValue").text());
+    				}
+    				else if (e.select("category").text().equals("WSD")) {
+    					result[i][4] = Double.parseDouble(e.select("fcstValue").text());
+    					System.out.println("wsd : " + e.select("fcstValue").text());
+    				}
+    				else if (e.select("category").text().equals("POP")) {
+    					result[i][5] = Double.parseDouble(e.select("fcstValue").text());
+    					System.out.println("pop : " + e.select("fcstValue").text());
+    				}
+    				
+    				
+    			}
+    		}
+    		
+    		
+    	}
+    	
+    	System.out.println("ok");
+    	
+    	return result;
+
+	
+    	
+    	
+    }
+    
+    //ìœ„ë„, ê²½ë„ ì •ë³´ë¥¼ ë°›ì•„ ê²©ì x, y ì¢Œí‘œë¡œ ë³€í™˜ (ì˜¤í”ˆì†ŒìŠ¤ ì´ìš©)
+    //ê³µê³µ apiì— ìš”ì²­í•  ë•Œ ê²©ì x, y ì¢Œí‘œë¡œ ìš”ì³¥í•´ì•¼ í•œë‹¤. 
+    public int[] get_xy(double[] lat_lng) {
+    	double RE = 6371.00877; // ì§€êµ¬ ë°˜ê²½(km)
+        double GRID = 5.0; // ê²©ì ê°„ê²©(km)
+        double SLAT1 = 30.0; // íˆ¬ì˜ ìœ„ë„1(degree)
+        double SLAT2 = 60.0; // íˆ¬ì˜ ìœ„ë„2(degree)
+        double OLON = 126.0; // ê¸°ì¤€ì  ê²½ë„(degree)
+        double OLAT = 38.0; // ê¸°ì¤€ì  ìœ„ë„(degree)
+        double XO = 43; // ê¸°ì¤€ì  Xì¢Œí‘œ(GRID)
+        double YO = 136; // ê¸°ì¤€ì  Yì¢Œí‘œ(GRID)
+        
+        double DEGRAD = Math.PI / 180.0;
+        double RADDEG = 180.0 / Math.PI;
+
+        double re = RE / GRID;
+        double slat1 = SLAT1 * DEGRAD;
+        double slat2 = SLAT2 * DEGRAD;
+        double olon = OLON * DEGRAD;
+        double olat = OLAT * DEGRAD;
+        int rs[] = {0, 0};
+       
+        double sn = Math.tan(Math.PI * 0.25 + slat2 * 0.5) / Math.tan(Math.PI * 0.25 + slat1 * 0.5);
+        sn = Math.log(Math.cos(slat1) / Math.cos(slat2)) / Math.log(sn);
+        double sf = Math.tan(Math.PI * 0.25 + slat1 * 0.5);
+        sf = Math.pow(sf, sn) * Math.cos(slat1) / sn;
+        double ro = Math.tan(Math.PI * 0.25 + olat * 0.5);
+        ro = re * sf / Math.pow(ro, sn);
+        
+       
+        double ra = Math.tan(Math.PI * 0.25 + (lat_lng[0]) * DEGRAD * 0.5);
+        ra = re * sf / Math.pow(ra, sn);
+        double theta = lat_lng[1] * DEGRAD - olon;
+        
+        if (theta > Math.PI) theta -= 2.0 * Math.PI;
+        if (theta < -Math.PI) theta += 2.0 * Math.PI;
+        theta *= sn;
+        
+        rs[0] = (int) (Math.floor(ra * Math.sin(theta) + XO + 0.5));
+        rs[1] = (int) (Math.floor(ro - ra * Math.cos(theta) + YO + 0.5));
+        
+        return rs;
+    }
+    
+    //x, y ì¢Œí‘œ ì •ë³´ë¥¼ ë°›ì•„ ìœ„ë„, ê²½ë„ ì •ë³´ë¡œ ë³€í™˜ (ì˜¤í”ˆì†ŒìŠ¤ ì´ìš©)
+    public double[] get_lat_lng(double[] xy) {
+    	
+    	double RE = 6371.00877; // ì§€êµ¬ ë°˜ê²½(km)
+        double GRID = 5.0; // ê²©ì ê°„ê²©(km)
+        double SLAT1 = 30.0; // íˆ¬ì˜ ìœ„ë„1(degree)
+        double SLAT2 = 60.0; // íˆ¬ì˜ ìœ„ë„2(degree)
+        double OLON = 126.0; // ê¸°ì¤€ì  ê²½ë„(degree)
+        double OLAT = 38.0; // ê¸°ì¤€ì  ìœ„ë„(degree)
+        double XO = 43; // ê¸°ì¤€ì  Xì¢Œí‘œ(GRID)
+        double YO = 136; // ê¸°ì¤€ì  Yì¢Œí‘œ(GRID)
+        
+        double DEGRAD = Math.PI / 180.0;
+        double RADDEG = 180.0 / Math.PI;
+
+        double re = RE / GRID;
+        double slat1 = SLAT1 * DEGRAD;
+        double slat2 = SLAT2 * DEGRAD;
+        double olon = OLON * DEGRAD;
+        double olat = OLAT * DEGRAD;
+        double rs[] = {0, 0};
+       
+        double sn = Math.tan(Math.PI * 0.25 + slat2 * 0.5) / Math.tan(Math.PI * 0.25 + slat1 * 0.5);
+        sn = Math.log(Math.cos(slat1) / Math.cos(slat2)) / Math.log(sn);
+        double sf = Math.tan(Math.PI * 0.25 + slat1 * 0.5);
+        sf = Math.pow(sf, sn) * Math.cos(slat1) / sn;
+        double ro = Math.tan(Math.PI * 0.25 + olat * 0.5);
+        ro = re * sf / Math.pow(ro, sn);
+        
+        double xn = xy[0] - XO;
+        double yn = ro - xy[1] + YO;
+        double ra = Math.sqrt(xn * xn + yn * yn);
+        if (sn < 0.0) ra = -ra;
+        double alat = Math.pow((re * sf / ra), (1.0 / sn));
+        alat = 2.0 * Math.atan(alat) - Math.PI * 0.5;
+
+        double theta = 0.0;
+        if (Math.abs(xn) <= 0.0) {
+            theta = 0.0;
+        }
+        else {
+            if (Math.abs(yn) <= 0.0) {
+                theta = Math.PI * 0.5;
+                if (xn < 0.0) theta = -theta;
+            }
+            else theta = Math.atan2(xn, yn);
+        }
+        double alon = theta / sn + olon;
+        rs[0] = alat * RADDEG;
+        rs[1] = alon * RADDEG;
+        
+        return rs;
     }
     
     
-    public String get_pm_data() { // @@@@@ ½ºÅÂÆ½ Á¦°Å
-    	String url = "http://apis.data.go.kr/B552584/ArpltnInforInqireSvc/"
-    			+ "getCtprvnRltmMesureDnsty"
-    			+ "?serviceKey=X7VbxDZo%2F8scobmS5QUIF2h6s%2F2FVu4HbJ%2BSa2x31kXEuRx8j48OX79kZ4kGJ9F6jl7ef6Haq4SD2sK8t3Entw%3D%3D"
-    			+ "&returnType=xml"
-    			+ "&numOfRows=100"
-    			+ "&pageNo=1"
-    			+ "&sidoName=%EA%B0%95%EC%9B%90" // °­¿ø
-    			+ "&ver=1.0"; 
-		String value = "";
-    	Document doc = null;
-		
-		try {
-			doc = Jsoup.connect(url).get();
-		} catch (IOException e) {
-			e.printStackTrace();
-		}
-		//System.out.println(doc);
-		Elements elements = doc.select("item");
-		for (Element e : elements) {
-			if (e.select("stationName").text().equals("¿ÁÃµµ¿")) {
-				value = e.select("pm10Value").text();
-			}
-		}
-    	return value;
-    }
     ///@@@@@@@@@@@@@@@@@
 	@Override
 	public void connectionLost(Throwable arg0) {
@@ -179,11 +398,54 @@ public class Mqtt_client implements MqttCallback{ // implement callback Ãß°¡ & Ç
 	@Override
 	public void messageArrived(String topic, MqttMessage msg) throws Exception {
 		// TODO Auto-generated method stub
-		if (topic.equals("led")){
-			System.out.println("--------------------Actuator Function--------------------");
-			System.out.println("LED Display changed");
-			System.out.println("LED: " + msg.toString());
+		if (topic.equals("path")){
+			System.out.println("--------------------Received Message---------------------");
+			System.out.println("Path : " + msg.toString());
 			System.out.println("---------------------------------------------------------");
+			String[] time_lat_lng = msg.toString().split(" ");
+			
+			
+			
+			double[][] result = get_weather_data(time_lat_lng);
+			
+			String pub_rst = "";
+			
+			// ê° ìœ„ì¹˜ì˜ x, y ì¢Œí‘œ ì •ë³´ë¥¼ ìœ„ë„, ê²½ë„ ì •ë³´ë¡œ ë³€í™˜ (ì¹´ì¹´ì˜¤ ì§€ë„ì— í‘œì‹œí•  ë•ŒëŠ” ìœ„ë„, ê²½ë„ ì •ë³´ê°€ í•„ìš”)
+			for (int i=0; i<result.length; i++) {
+				double [] sub_xy = {result[i][0], result[i][1]}; 
+				double [] sub_lat_lng = get_lat_lng(sub_xy);
+				result[i][0] = sub_lat_lng[0];
+				result[i][1] = sub_lat_lng[1];
+				
+				pub_rst += "'" + result[i][0] + " " + result[i][1] + " " + result[i][2] + " " + result[i][3]
+						 	+ " " + result[i][4] + " " + result[i][5] + "'";
+			}
+			
+			
+			
+			
+			
+			try {
+    			publish_data("result", pub_rst); // ìœ„ë„, ê²½ë„, ì˜¨ë„, í’ì†, í’í–¥, ê°•ìˆ˜í™•ë¥  ë°œí–‰
+    		}catch (Exception e) {
+				// TODO: handle exception
+    			try {
+    				mqtt_client.disconnect();
+				} catch (MqttException e1) {
+					// TODO Auto-generated catch block
+					e1.printStackTrace();
+				}
+    			e.printStackTrace();
+    	        System.out.println("Disconnected");
+    	        System.exit(0);
+			}
+			
+			
+			
+			
+			
+			
+
 		}		
 	}
 }
