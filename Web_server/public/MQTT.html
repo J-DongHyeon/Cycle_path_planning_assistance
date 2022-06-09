@@ -6,29 +6,13 @@
 <script src="https://code.jquery.com/jquery-3.3.1.min.js"></script>
 <script>
 	var socket = io.connect();
-	var timer = null;
-	$(document).ready(function(){
-		socket.on("socket_up_temp", function(data){
-			data = JSON.parse(data);
-			$(".mqttlist_temp").html('<li>'+data.tmp+'도.'+'</li>');
-		});
 
-		if(timer==null){
-			timer = window.setInterval("timer_1()", 3000);
-		}
-	});
+	var path_LatLng = []; //요청 시간과 출발지, 목적지의 위도, 경도 정보를 담을 배열
+	var polylines = []; //출발지, 목적지를 이을 선 (polyline) 을 담을 배열
+	var markers = []; //출발지, 목적지 경로 상의 마커들을 담을 배열
 
-	function timer_1(){
-		socket.emit("socket_evt_update", JSON.stringify({}));
-	}
-
-	
 	// '입력완료' 버튼 클릭 시 http server에 socket으로 출발지, 목적지와 그의 위도, 경도 정보 전송
 	// 시간 정보도 전송
-	var path_LatLng = []; //출발지, 목적지의 위도, 경도 정보를 담을 배열
-	var markers = []; //출발지, 목적지의 마커를 담을 배열
-	var polylines = []; //출발지, 목적지를 이을 선 (polyline) 을 담을 배열
-
 	function bt_input(){
 		var path_str = [];
 
@@ -37,10 +21,12 @@
 
 		socket.emit("path_str", path_str);
 
+		//요청 시간 정보를 저장
 		var selected_item = document.getElementById("select-time");
 		window.path_LatLng[0] = selected_item.options[selected_item.selectedIndex].value;
 		
 
+		//출발지, 목적지의 위도, 경도 정보를 저장
 		geocoder.addressSearch(path_str[0], function(result, status) {
 
 			if (status == kakao.maps.services.Status.OK) {
@@ -68,8 +54,13 @@
 //		const vv = document.getElementById('bt_input');
 //		vv.value = '123';
 
-
+		//지도의 크기를 출발지, 목적지에 맞게 조정
+		//기존의 마커들은 모두 지운다
 		function setBounds() {
+
+			for (i=0; i<markers.length; i++) {
+				markers[i].setMap(null);
+			}
 
 			var points = [
 				new kakao.maps.LatLng(parseFloat(path_LatLng[1]), parseFloat(path_LatLng[2])),
@@ -78,24 +69,15 @@
 
 			var bounds = new kakao.maps.LatLngBounds();
 
-			for (i=0; i<markers.length; i++) {
-				markers[i].setMap(null);
-			}
-
 			var i;
 			for (i=0; i<points.length; i++) {
-				markers[i] = new kakao.maps.Marker({ position : points[i] });
-				markers[i].setMap(map);
-
 				bounds.extend(points[i]);
 			}
 
-
 			map.setBounds(bounds);
-			
-
 		}
 
+		//출발지와 목적지를 잇는 선 그리기
 		function draw_line() {
 
 			if (polylines.length > 0)
@@ -108,7 +90,7 @@
 
 			polylines[0] = new kakao.maps.Polyline({
 				path: linePath,
-				strokeWeight: 30,
+				strokeWeight: 50,
 				strokeColor: '#33EE33',
 				strokeOpacity: 0.5,
 				strokeStyle: 'solid'
@@ -117,9 +99,35 @@
 			polylines[0].setMap(map);
 
 		}
+	}
 
+
+	// http server로부터 최종 결과 (위도, 경도, 온도, 풍속, 풍향, 강수 확률) 를 socket으로 받았을 때 실행
+	socket.on("result", function(data) {
+		var lat = [], lng = [];
+		var tmp = [], vec = [], wsd = [], pop = [];
+
+		var i;
+		for (i=0; i<data.length; i++) {
+			var sub_data = data[i];
+			sub_data = sub_data.split(" ");
+			lat[i] = parseFloat(sub_data[0]); lng[i] = parseFloat(sub_data[1]);
+			tmp[i] = parseFloat(sub_data[2]); vec[i] = parseFloat(sub_data[3]);
+			wsd[i] = parseFloat(sub_data[4]); pop[i] = parseFloat(sub_data[5]);
+		}
+		setMarker(lat, lng);
 		
+	});
 
+	function setMarker(lat, lng) {
+
+		var i, markerPosition;
+		for (i=0; i<lat.length; i++) {
+			markerPosition = new kakao.maps.LatLng(lat[i], lng[i]);
+			markers[i] = new kakao.maps.Marker({ position : markerPosition });
+			markers[i].setMap(map);
+		}
+		
 	}
 
 </script>
@@ -154,8 +162,8 @@
 			option.innerText = sub_option[i];
 			selectTime.append(option);
 		}
-
 	</script>
+
 
 	<div id="map" style="width:1000px;height:500px;margin:auto auto;"></div>
 
@@ -173,19 +181,7 @@
 		var geocoder = new kakao.maps.services.Geocoder();
 
 	</script>
-
-<!--
-	<div id="msg">
-		<div id="mqtt_logs">
-			<ul class="mqttlist_temp"></ul>
-			<ul class="mqttlist_humi"></ul>
-			<ul class="mqttlist_pm"></ul>
-			<button id="button1" onclick="button_on();"><b>LED ON</b></button>
-			<button id="button2" onclick="button_off();"><b>LED OFF</b></button>			
-		</div>
-	</div>
--->
-
+	
 </body>
 </html>
 

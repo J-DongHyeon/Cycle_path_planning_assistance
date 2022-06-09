@@ -34,49 +34,20 @@
   * MQTT subscriber (MQTT Server connection & Read resource data)
   */
  var mqtt = require("mqtt");
-const { stringify } = require('querystring');
+ const { stringify } = require('querystring');
  var mqtt_client = mqtt.connect("mqtt://127.0.0.1")
  
- // 접속에 성공하면, 3가지 토픽을 구독.
+ // 접속에 성공하면, 'result' 토픽을 구독.
  mqtt_client.on("connect", function(){
    mqtt_client.subscribe("result");
    console.log("Subscribing result");
  })
 
-// MQTT 응답 메세지 수신시 동작
-mqtt_client.on("message", function(topic, message){
-
-  if (topic == "result"){
-    console.log(message.toString());
-  }	
-});
-
-
-  
- // get data from MongDB and then send it to HTML page using socket
- // Mongo DB에서 최근 데이터 불러와서, HTML 페이지에 업데이트
+// socket에 연결
 var io = require("socket.io")(server);
+var g_socket;
 io.on("connection", function(socket){
-  socket.on("socket_evt_update", function(data){
-    //온도 데이터
-    var cursor = dbObj.db("Resources").collection("Temperature");
-    var options = {sort:{"_id":-1}, projection: {_id:0, tmp:1, creat_at:1},};
-    var sending_data =cursor.find({},options).limit(1);
-    sending_data.toArray(function(err,results){
-      if(!err){
-        socket.emit("socket_up_temp", JSON.stringify(results[0]));
-      }
-    });
- 
-  });
-
-  // LED 버튼 입력 시 MQTT 정보 발행
-  socket.on("socket_evt_bnt", function(data){
-    console.log("MQTT Publish- LED control");
-    console.log(data);
-    mqtt_client.publish("led", data);
-  });
-
+  g_socket = socket;
 
   // html로부터 출발지, 목적지 데이터를 받으면 DB에 저장
   socket.on("path_str", function(data){
@@ -92,13 +63,26 @@ io.on("connection", function(socket){
     });
   });
 
-
-  // html로부터 출발지, 목적지 위도, 경도 데이터와 시간 정보를 받으면 Mqtt publish
+  // html로부터 시간 정보와 출발지, 목적지 위도, 경도 데이터를 받으면 Mqtt publish
   socket.on("path_LatLng", function(data){
     mqtt_client.publish("path", data[0] + ' ' + data[1] + ' ' + data[2] + ' ' + data[3] + ' ' + data[4]);
     console.log(data)
   });
 });
+
+// MQTT 응답 메세지 수신시 html로 전송
+mqtt_client.on("message", function(topic, message){
+
+  if (topic == "result"){
+    const str = message.toString();
+    const data = str.split("&");
+    g_socket.emit("result", data);
+
+    //console.log("str : " + str);
+    //console.log(data);
+    //console.log("---");
+  }
+}); 
  
  
  /**

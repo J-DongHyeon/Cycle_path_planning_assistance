@@ -5,6 +5,6 @@
 공공 API로 받아온 특정 날짜의 자전거 경로의 1시간 기온, 풍향, 풍속, 강수 확률 데이터 또한 java에서 web server의 Mqtt client로 publish --완료
 (위도, 경도 데이터와 함께 publish)
 
-web server의 Mqtt client에서 html 페이지로 socket으로 전송
+web server의 Mqtt client에서 html 페이지로 socket으로 전송 --완료
 
 html의 카카오 지도 각 위치에 기온, 풍향, 풍속, 강수 확률 데이터 표시
