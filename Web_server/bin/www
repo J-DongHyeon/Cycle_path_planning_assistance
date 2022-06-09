@@ -39,26 +39,19 @@ const { stringify } = require('querystring');
  
  // 접속에 성공하면, 3가지 토픽을 구독.
  mqtt_client.on("connect", function(){
-   mqtt_client.subscribe("Latitude");
-   console.log("Subscribing Latitude");
+   mqtt_client.subscribe("result");
+   console.log("Subscribing result");
  })
 
 // MQTT 응답 메세지 수신시 동작
 mqtt_client.on("message", function(topic, message){
-  console.log(topic+ ": " + message.toString()); // 수신한 메세지 Topic 출력
-  var obj = JSON.parse(message); // 수신한 메세지의 데이터를 obj 저장
-  obj.create_at = new Date(); // 현재 날짜 데이터를 obj에 추가함.
-  console.log(obj);
-   // send the received data to MongoDB
-   // 수신한 메세지를 Mongo DB에 저장
-  if (topic == "tmp"){ // 만약 토픽이 온도라면,
-    var cursor = dbObj.db("Resources").collection("Temperature");
-    cursor.insertOne(obj, function(err, result){
-      if(err){console.log(err);}
-      else{console.log(JSON.stringify(result));}
-    });
+
+  if (topic == "result"){
+    console.log(message.toString());
   }	
 });
+
+
   
  // get data from MongDB and then send it to HTML page using socket
  // Mongo DB에서 최근 데이터 불러와서, HTML 페이지에 업데이트
