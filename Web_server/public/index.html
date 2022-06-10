@@ -248,10 +248,10 @@ https://templatemo.com/tm-521-get-ready
                     vec[i] = vec_to_str(vec[i]);
                     
                     content = '<span class="info-title">'
-                                   + 'tmp : ' + tmp[i] + '<br>'
-                                   + 'vec : ' + vec[i] + '<br>'
-                                   + 'wsd : ' + wsd[i] + '<br>'
-                                   + 'pop : ' + pop[i]+ '</span>';
+                                   + '기온 : ' + tmp[i] + ' 도<br>'
+                                   + '풍향 : ' + vec[i] + '<br>'
+                                   + '풍속 : ' + wsd[i] + ' m/s<br>'
+                                   + '강수 확률 : ' + pop[i]+ ' %</span>';
                     custom_overlays[i] = new kakao.maps.InfoWindow({
                          position : markerPosition,
                          content : content
