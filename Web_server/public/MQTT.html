@@ -118,9 +118,7 @@ https://templatemo.com/tm-521-get-ready
                //요청 시간 정보를 저장
                var selected_item = document.getElementById("select-time");
                window.path_LatLng[0] = selected_item.options[selected_item.selectedIndex].value;
-
-              
-               
+  
      
                //출발지, 목적지의 위도, 경도 정보를 저장
                geocoder.addressSearch(path_str[0], function(result, status) {
@@ -128,7 +126,6 @@ https://templatemo.com/tm-521-get-ready
                     if (status == kakao.maps.services.Status.OK) {
                          window.path_LatLng[1] = result[0].y;
                          window.path_LatLng[2] = result[0].x;
-                         
                     }
                });
      
@@ -197,7 +194,6 @@ https://templatemo.com/tm-521-get-ready
                     });
      
                     polylines[0].setMap(map);
-
                }
 
                function test() {
@@ -256,11 +252,8 @@ https://templatemo.com/tm-521-get-ready
                          position : markerPosition,
                          content : content
                     });
-     
                     custom_overlays[i].open(map, markers[i]);
-     
                }
-               
           }
 
           // 풍향을 문자열로 변환 (ex 50도 -> 북동풍)
