@@ -1,0 +1,306 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+
+     <title>Cycle Path Planning Assistance</title>
+<!-- 
+
+Get Ready Template
+
+https://templatemo.com/tm-521-get-ready
+
+-->
+     <meta charset="UTF-8">
+     <meta http-equiv="X-UA-Compatible" content="IE=Edge">
+     <meta name="description" content="">
+     <meta name="keywords" content="">
+     <meta name="team" content="">
+     <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1">
+
+     <link rel="stylesheet" href="css/bootstrap.min.css">
+     <link rel="stylesheet" href="css/vegas.min.css">
+     <link rel="stylesheet" href="css/font-awesome.min.css">
+
+     <!-- MAIN CSS -->
+     <link rel="stylesheet" href="css/templatemo-style.css">
+
+</head>
+<body>
+
+     <!-- HOME -->
+     <section id="home">
+        <div class="overlay"></div>
+          <div class="container">
+               <div class="row">
+                    <div class="col-lg-3 col-md-3 col-sm-3 col-xs-3">
+                         <div class="home-info">
+                              <h1>Cycle Path Planning<br>Assistance<br><br></h1>
+                              
+                              <div class="subscribe-form">
+                                   <input type="text" id="departure" class="form-control" placeholder="Enter Departure Area">
+                                   <br>
+                                   <input type="text" id="destination" class="form-control" placeholder="Enter Destination Area">
+                                   <br>
+                                   <input type="button" class="form-control-button" value="Search" onclick="bt_input()"></button>
+                              </div>
+                         </div>
+                    </div>
+
+                    <div class="col-lg-1 col-md-1 col-sm-1 col-xs-1">
+                         <div class="home-info">
+                              <br>
+                              <div class="selectbox">
+                                   <label for="ex_select">=== 시간 ===</label>
+                                   <select id="select-time" class="select-time">
+                                        <option value="none">=== 시간 ===</option>
+                                        <option value="now">현재</option>
+                                   </select>
+                              </div>
+                              
+                         </div>
+                    </div>
+
+                    <div class="col-lg-8 col-md-8 col-sm-8 col-xs-8"> 
+                         
+                         <div class="home-info">
+                              <div id="map" style="width:900px;height:700px;"></div>
+
+                              <script type="text/javascript" src="//dapi.kakao.com/v2/maps/sdk.js?appkey=a73316532a6292cb5d9a5de529289d00&libraries=services"></script>
+                         
+                              <script>
+                                   var container = document.getElementById('map');
+                                   var options = {
+                                        center: new kakao.maps.LatLng(37.8813153, 127.7299707),
+                                        level: 5
+                                   };
+                         
+                                   var map = new kakao.maps.Map(container, options);
+                         
+                                   var geocoder = new kakao.maps.services.Geocoder();
+                         
+                              </script>
+                         </div>
+                    </div>
+               </div>
+          </div>
+     </section>
+
+     <!-- SCRIPTS -->
+     <script src="js/jquery.js"></script>
+     <script src="js/bootstrap.min.js"></script>
+     <script src="js/vegas.min.js"></script>
+     <script src="js/countdown.js"></script>
+     <script src="js/init.js"></script>
+     <script src="js/custom.js"></script>
+     <script src="/socket.io/socket.io.js"></script>
+     <script src="https://code.jquery.com/jquery-3.3.1.min.js"></script>
+     <script>var $j331 = jQuery.noConflict(true);</script>
+
+     <script>
+          var socket = io.connect();
+     
+          var path_LatLng = []; //요청 시간과 출발지, 목적지의 위도, 경도 정보를 담을 배열
+          var polylines = []; //출발지, 목적지를 이을 선 (polyline) 을 담을 배열
+          var markers = []; //출발지, 목적지 경로 상의 마커들을 담을 배열
+          var custom_overlays = []; //마커들 위에 표시될 커스텀 오버레이 들을 담을 배열
+     
+          // '입력완료' 버튼 클릭 시 http server에 socket으로 출발지, 목적지와 그의 위도, 경도 정보 전송
+          // 시간 정보도 전송
+          function bt_input(){
+
+               var path_str = [];
+     
+               path_str[0] = document.getElementById('departure').value;
+               path_str[1] = document.getElementById('destination').value;
+     
+               socket.emit("path_str", path_str);
+     
+               //요청 시간 정보를 저장
+               var selected_item = document.getElementById("select-time");
+               window.path_LatLng[0] = selected_item.options[selected_item.selectedIndex].value;
+
+              
+               
+     
+               //출발지, 목적지의 위도, 경도 정보를 저장
+               geocoder.addressSearch(path_str[0], function(result, status) {
+     
+                    if (status == kakao.maps.services.Status.OK) {
+                         window.path_LatLng[1] = result[0].y;
+                         window.path_LatLng[2] = result[0].x;
+                         
+                    }
+               });
+     
+               geocoder.addressSearch(path_str[1], function(result, status) {
+     
+                    if (status == kakao.maps.services.Status.OK) {
+                         window.path_LatLng[3] = result[0].y;
+                         window.path_LatLng[4] = result[0].x;
+     
+                         socket.emit("path_LatLng", path_LatLng);
+     
+                         setBounds();
+     
+                         draw_line();
+
+                         //test();
+                         
+                    }
+               });
+     
+     //		const vv = document.getElementById('bt_input');
+     //		vv.value = '123';
+     
+               //지도의 크기를 출발지, 목적지에 맞게 조정
+               //기존의 마커들, 커스텀 오버레이 들은 모두 지운다
+               function setBounds() {
+
+                    for (i=0; i<markers.length; i++) {
+                         markers[i].setMap(null);
+                         custom_overlays[i].close();
+                    }
+     
+                    var points = [
+                         new kakao.maps.LatLng(parseFloat(path_LatLng[1]), parseFloat(path_LatLng[2])),
+                         new kakao.maps.LatLng(parseFloat(path_LatLng[3]), parseFloat(path_LatLng[4]))
+                    ];
+     
+                    var bounds = new kakao.maps.LatLngBounds();
+     
+                    var i;
+                    for (i=0; i<points.length; i++) {
+                         bounds.extend(points[i]);
+                    }
+     
+                    map.setBounds(bounds);
+
+               }
+     
+               //출발지와 목적지를 잇는 선 그리기
+               function draw_line() {
+     
+                    if (polylines.length > 0)
+                         polylines[0].setMap(null);
+     
+                    var linePath = [
+                         new kakao.maps.LatLng(parseFloat(path_LatLng[1]), parseFloat(path_LatLng[2])),
+                         new kakao.maps.LatLng(parseFloat(path_LatLng[3]), parseFloat(path_LatLng[4]))
+                    ];
+     
+                    polylines[0] = new kakao.maps.Polyline({
+                         path: linePath,
+                         strokeWeight: 50,
+                         strokeColor: '#33EE33',
+                         strokeOpacity: 0.5,
+                         strokeStyle: 'solid'
+                    });
+     
+                    polylines[0].setMap(map);
+
+               }
+
+               function test() {
+
+                    var marker_test = new kakao.maps.LatLng(37.8812440340088, 127.730207024668);
+                    var content_test = '<span class="info-title">'
+                                  + '기온 : ' + 1 + '<br>'
+                                + '풍향 : ' + 2 +  '<br>'
+                                 + '풍속 : ' + 3 +  '<br>'
+                                + '강수확률 : ' + 4 + '</span>';
+                    var custom_test = new kakao.maps.InfoWindow({
+                         position : marker_test,
+                         content : content_test
+                    });
+
+                    custom_test.open(map);
+               }
+          }
+     
+     
+          // http server로부터 최종 결과 (위도, 경도, 온도, 풍속, 풍향, 강수 확률) 를 socket으로 받았을 때 실행
+          socket.on("result", function(data) {
+               var lat = [], lng = [];
+               var tmp = [], vec = [], wsd = [], pop = [];
+     
+               var i;
+               for (i=0; i<data.length; i++) {
+                    var sub_data = data[i];
+                    sub_data = sub_data.split(" ");
+                    lat[i] = parseFloat(sub_data[0]); lng[i] = parseFloat(sub_data[1]);
+                    tmp[i] = parseFloat(sub_data[2]); vec[i] = parseFloat(sub_data[3]);
+                    wsd[i] = parseFloat(sub_data[4]); pop[i] = parseFloat(sub_data[5]);
+               }
+               set_marker_infowindow(lat, lng, tmp, vec, wsd, pop);
+               
+          });
+     
+          // 경로 상에 마커들을 표시한다.
+          // 각 마커들 위에 그 위치의 (온도, 풍향, 풍속, 강수 확률) 정보를 담은 커스텀 오버레이를 표시한다.
+          function set_marker_infowindow(lat, lng, tmp, vec, wsd, pop) {
+     
+               var i, markerPosition, content;
+               for (i=0; i<lat.length; i++) {
+                    markerPosition = new kakao.maps.LatLng(lat[i], lng[i]);
+                    markers[i] = new kakao.maps.Marker({ position : markerPosition });
+                    markers[i].setMap(map);
+     
+                    vec[i] = vec_to_str(vec[i]);
+                    
+                    content = '<span class="info-title">'
+                                   + 'tmp : ' + tmp[i] + '<br>'
+                                   + 'vec : ' + vec[i] + '<br>'
+                                   + 'wsd : ' + wsd[i] + '<br>'
+                                   + 'pop : ' + pop[i]+ '</span>';
+                    custom_overlays[i] = new kakao.maps.InfoWindow({
+                         position : markerPosition,
+                         content : content
+                    });
+     
+                    custom_overlays[i].open(map, markers[i]);
+     
+               }
+               
+          }
+
+          // 풍향을 문자열로 변환 (ex 50도 -> 북동풍)
+          function vec_to_str(vec) {
+               if (vec>=0 && vec<45) return "N-NE";
+               else if (vec>=45 && vec<90) return "NE-E";
+               else if (vec>=90 && vec<135) return "E-SE";
+               else if (vec>=135 && vec<180) return "SE-S";
+               else if (vec>=180 && vec<225) return "S-SW";
+               else if (vec>=225 && vec<270) return "SW-W";
+               else if (vec>=270 && vec<315) return "W-NW";
+               else if (vec>=315 && vec<360) return "NW-N";
+          }
+     
+     </script>
+
+     <script>
+		var selectTime = document.querySelector('.select-time');
+
+		var sub_option = ['3시간+', '6시간+', '9시간+', '12시간+', '15시간+', '18시간+', '21시간+', '24시간+',
+		'27시간+', '30시간+', '33시간+', '36시간+', '39시간+', '42시간+', '45시간+', '48시간+', '51시간+',
+		'54시간+']
+
+		var i;
+		for (i=0; i < sub_option.length; i++) {
+			var option = document.createElement('option');
+			option.innerText = sub_option[i];
+			selectTime.append(option);
+		}
+
+          $j331(document).ready(function() {
+               var selectTarget = $j331('.selectbox select');
+
+               selectTarget.change(function(){
+                    var select_name = $j331(this).children('option:selected').text();
+                    $j331(this).siblings('label').text(select_name);
+               });
+          });
+
+	</script>
+
+</body>
+</html>

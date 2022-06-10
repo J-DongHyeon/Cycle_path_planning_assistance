@@ -10,6 +10,7 @@
 	var path_LatLng = []; //요청 시간과 출발지, 목적지의 위도, 경도 정보를 담을 배열
 	var polylines = []; //출발지, 목적지를 이을 선 (polyline) 을 담을 배열
 	var markers = []; //출발지, 목적지 경로 상의 마커들을 담을 배열
+	var custom_overlays = []; //마커들 위에 표시될 커스텀 오버레이 들을 담을 배열
 
 	// '입력완료' 버튼 클릭 시 http server에 socket으로 출발지, 목적지와 그의 위도, 경도 정보 전송
 	// 시간 정보도 전송
@@ -55,11 +56,12 @@
 //		vv.value = '123';
 
 		//지도의 크기를 출발지, 목적지에 맞게 조정
-		//기존의 마커들은 모두 지운다
+		//기존의 마커들, 커스텀 오버레이 들은 모두 지운다
 		function setBounds() {
 
 			for (i=0; i<markers.length; i++) {
 				markers[i].setMap(null);
+				custom_overlays[i].close();
 			}
 
 			var points = [
@@ -115,17 +117,37 @@
 			tmp[i] = parseFloat(sub_data[2]); vec[i] = parseFloat(sub_data[3]);
 			wsd[i] = parseFloat(sub_data[4]); pop[i] = parseFloat(sub_data[5]);
 		}
-		setMarker(lat, lng);
+		set_marker_infowindow(lat, lng, tmp, vec, wsd, pop);
 		
 	});
 
-	function setMarker(lat, lng) {
+	// 경로 상에 마커들을 표시한다.
+	// 각 마커들 위에 그 위치의 (온도, 풍향, 풍속, 강수 확률) 정보를 담은 커스텀 오버레이를 표시한다.
+	function set_marker_infowindow(lat, lng, tmp, vec, wsd, pop) {
 
-		var i, markerPosition;
+		var i, markerPosition, content;
 		for (i=0; i<lat.length; i++) {
 			markerPosition = new kakao.maps.LatLng(lat[i], lng[i]);
 			markers[i] = new kakao.maps.Marker({ position : markerPosition });
 			markers[i].setMap(map);
+
+			
+			
+			content = '<span style="display: block;background: #50627F;color: #fff;text-align: center;' 
+						+ 'padding:0px 10px;width: 200px;line-height:22px;border-radius:4px;"class="info-title">'
+						+ 'tmp : ' + tmp[i] + '<br>'
+						+ 'vec : ' + vec[i] + '<br>'
+						+ 'wsd : ' + wsd[i] + '<br>'
+						+ 'pop : ' + pop[i]+ '</span>'
+			custom_overlays[i] = new kakao.maps.CustomOverlay({
+				position : markerPosition,
+				content : content
+			});
+
+			custom_overlays[i].open(map, markers[i]);
+
+			
+
 		}
 		
 	}
@@ -181,7 +203,7 @@
 		var geocoder = new kakao.maps.services.Geocoder();
 
 	</script>
-	
+
 </body>
 </html>
 

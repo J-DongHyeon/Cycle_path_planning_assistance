@@ -78,9 +78,9 @@ mqtt_client.on("message", function(topic, message){
     const data = str.split("&");
     g_socket.emit("result", data);
 
-    //console.log("str : " + str);
-    //console.log(data);
-    //console.log("---");
+    console.log("str : " + str);
+    console.log(data);
+    console.log("---");
   }
 }); 
  
