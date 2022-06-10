@@ -59,9 +59,11 @@ public class Mqtt_client implements MqttCallback{ // implement callback 추가 &
     
     public void publish_data(String topic_input, String data) { 
         String topic = topic_input; // 토픽
-        int qos = 0; // QoS level
+        int qos = 1; // QoS level
         try {
-            System.out.println("Publishing message: "+data);
+        	//String sub_data = "{\"test\":10}";
+            System.out.println("Publishing message: "+ data);
+            
             mqtt_client.publish(topic, data.getBytes(), qos, false); // topic, 데이터를 byte로 변환하여 전송, qos level, retain bit
             System.out.println("Message published");
         } catch(MqttException me) {
@@ -86,7 +88,7 @@ public class Mqtt_client implements MqttCallback{ // implement callback 추가 &
     	int x_interval = Math.abs(start_xy[0] - dest_xy[0]);
     	int y_interval = Math.abs(start_xy[1] - dest_xy[1]);
     	
-    	//출발지와 목적지 사이의 일정한 간격 좌표들을 구할 것이다. 거리가 너무 멀면 8개 좌표로 제한한다.
+    	//출발지와 목적지 사이의 일정한 간격 좌표들을 구할 것이다. 거리가 너무 멀면 9개 좌표로 제한한다.
     	int [][] nx_ny = new int[9][2];
     	nx_ny[0][0] = start_xy[0]; nx_ny[0][1] = start_xy[1];
     	
@@ -159,22 +161,17 @@ public class Mqtt_client implements MqttCallback{ // implement callback 추가 &
 			}
     	}
     	
-    	/*
-    	System.out.println(start_xy[0] + " " + start_xy[1] + " " + dest_xy[0] + " " + dest_xy[1]);
-    	for(int i=0; i<9; i++) {
-    		System.out.println(Arrays.toString(nx_ny[i]));
-    	}
-    	*/
-    
-    	
     	// 현재 시간 확인해서 날짜, 시간 저장
     	Date current = new Date(System.currentTimeMillis());
     	SimpleDateFormat d_format = new SimpleDateFormat("yyyyMMddHHmmss"); 
-    	int inow_date = Integer.parseInt(d_format.format(current).substring(0,8)); //날짜
+    	int inow_date = Integer.parseInt(d_format.format(current).substring(0,8)); //현재 날짜
     	int ibase_date = inow_date;
-    	String now_time = d_format.format(current).substring(8,12); //시간
+    	String now_time = d_format.format(current).substring(8,12); //현재 시간
     	String base_time = now_time;
     	
+    	// 공공 api에 데이터를 요청할 때는 02시, 05시, 08시, 11시, 14시, 17시, 20시, 23시를 기준으로 요청해야 한다.
+    	// 요청한 시간을 기준으로 최대 70시간 이후까지의 단기예보 정보를 얻을 수 있다.
+    	// 현재 시간과 가장 가까운 요청 시간을 구한다. (base_time)
     	if ((base_time.compareTo("0215") >= 0) && (base_time.compareTo("0515") < 0)) base_time = "0200";
     	else if ((base_time.compareTo("0515") >= 0) && (base_time.compareTo("0815") < 0)) base_time = "0500";
     	else if ((base_time.compareTo("0815") >= 0) && (base_time.compareTo("1115") < 0)) base_time = "0800";
@@ -189,11 +186,26 @@ public class Mqtt_client implements MqttCallback{ // implement callback 추가 &
     	
     	String base_date = String.valueOf(ibase_date);
     	
-    	//공공 API 데이터를 얻고자 하는 날짜, 시간을 구한다. (fcst_date, fcst_time)
-    	
-    	String fcst_date = String.valueOf(inow_date);
-    	String fcst_time = now_time.substring(0, 2) + "00";
-    	if (!plus_time.equals("now") && !plus_time.equals("none")) {
+    	//요청 받을 공공 api 데이터 중에서 추출하고자 하는 데이터의 날짜, 시간을 구한다. (fcst_date, fcst_time)
+    	String fcst_date;
+    	String fcst_time;
+    	if (plus_time.equals("now") || plus_time.equals("none")) {
+    		if (Integer.parseInt(base_time.substring(0, 2)) == Integer.parseInt(now_time.substring(0, 2))) {
+        		if (now_time.substring(0, 2) == "23") {
+        			fcst_time = "0000";
+        			fcst_date = String.valueOf(inow_date + 1);
+        		}
+        		else {
+        			fcst_time = (Integer.parseInt(now_time.substring(0, 2)) + 1) + "00";
+        			if (fcst_time.length() == 3) fcst_time = "0" + fcst_time;
+        			fcst_date = String.valueOf(inow_date);
+
+        		}
+        	} else {
+        		fcst_time = now_time.substring(0, 2) + "00";
+        		fcst_date = String.valueOf(inow_date);
+        	}
+    	} else {
     		int iplus_time = 0;
     		
     		if (plus_time.length() == 4) {
@@ -203,19 +215,25 @@ public class Mqtt_client implements MqttCallback{ // implement callback 추가 &
         	}
     		
     		int sum = Integer.parseInt(now_time.substring(0, 2)) + iplus_time;
-    		if (sum / 24 > 0) {
-    			fcst_date = String.valueOf(inow_date + (sum / 24));
-    		}
+    		
+    		if (sum / 24 > 0) fcst_date = String.valueOf(inow_date + (sum / 24));
+    		else fcst_date = String.valueOf(inow_date);
+    		
     		fcst_time = String.valueOf(sum % 24) + "00";
     		if (fcst_time.length() == 3) fcst_time = "0" + fcst_time;
     	}
     
     
+    	//추출한 데이터를 담을 배열이다. (x좌표, y좌표, 1시간 기온, 풍향, 풍속, 강수 확률
+    	double[][] result = new double [9][6]; 
     	
+    	System.out.println("now_date : " + String.valueOf(inow_date) + ", now_time : " + now_time);
+		System.out.println("base_date : " + base_date + ", base_time : " + base_time);
+		System.out.println("fcst_date : " + fcst_date + ", fcst_time : " + fcst_time);
     	
-
-    	double[][] result = new double [9][6]; // { x좌표, y좌표, tmp, vec, wsd, pop } 
-    	
+		
+		
+		
     	for (int i=0; i<nx_ny.length; i++) {
     		if (nx_ny[i][0] == 0) break;
     		
@@ -224,22 +242,19 @@ public class Mqtt_client implements MqttCallback{ // implement callback 추가 &
     		
     		String nx = String.valueOf(nx_ny[i][0]);
     		String ny = String.valueOf(nx_ny[i][1]);
-    		
         	String url = "http://apis.data.go.kr/1360000/VilageFcstInfoService_2.0/getVilageFcst" // https가 아닌 http 프로토콜을 통해 접근해야 함.
         			+ "?serviceKey=Lcm5d0LdcOf0ikmOlbmHQkrgM%2Fe%2Bl8laBOhOhXB4n9q8cOvOFyhnFvwKclSTvc%2BK3rll9BgV0dfGF9mdgnJGQA%3D%3D"
         			+ "&pageNo=1&numOfRows=1000"
         			+ "&dataType=XML"
-        			//+ "&base_date=20220608"
-        			//+ "&base_time=0500"
+        			//+ "&base_date=20220609"
+        			//+ "&base_time=2300"
         			+ "&base_date="+base_date
         			+ "&base_time="+base_time
         			+ "&nx=" + nx
         			+ "&ny=" + ny;
-        	
-        	System.out.println(base_date +  "--" + base_time);
-        	System.out.println(fcst_date +  "--" + fcst_time);
     				
         	Document doc = null;
+        
     		
     		// Jsoup으로 API 데이터 가져오기
     		try {
@@ -247,45 +262,40 @@ public class Mqtt_client implements MqttCallback{ // implement callback 추가 &
     		} catch (IOException e) {
     			e.printStackTrace();
     		}
-    		//tmp, pop, vec, wsd
+    		
+	
+    		//받아온 xml API 중 원하는 날짜 시간의 tmp, vec, wsd, pop 데이터 추출
     		Elements elements = doc.select("item");
     		for (Element e : elements) {
     			if (e.select("fcstDate").text().equals(fcst_date) && e.select("fcstTime").text().equals(fcst_time)) {
     				if (e.select("category").text().equals("TMP")) {
     					result[i][2] = Double.parseDouble(e.select("fcstValue").text());
-    					System.out.println("tmp : " + e.select("fcstValue").text());
+    					System.out.print("nx : " + result[i][0] + ", ny : " + result[i][1]);
+    					System.out.print(", TMP : " + result[i][2]);
     				}
     				else if (e.select("category").text().equals("VEC")) {
     					result[i][3] = Double.parseDouble(e.select("fcstValue").text());
-    					System.out.println("vec : " + e.select("fcstValue").text());
+    					System.out.print(", VEC : " + result[i][3]);
     				}
     				else if (e.select("category").text().equals("WSD")) {
     					result[i][4] = Double.parseDouble(e.select("fcstValue").text());
-    					System.out.println("wsd : " + e.select("fcstValue").text());
+    					System.out.print(", WSD : " + result[i][4]);
     				}
     				else if (e.select("category").text().equals("POP")) {
     					result[i][5] = Double.parseDouble(e.select("fcstValue").text());
-    					System.out.println("pop : " + e.select("fcstValue").text());
+    					System.out.println(", POP : " + result[i][5]);
     				}
-    				
-    				
     			}
     		}
-    		
-    		
     	}
     	
-    	System.out.println("ok");
+    	System.out.println("Web Crawling Ok");
     	
     	return result;
-
-	
-    	
-    	
     }
     
     //위도, 경도 정보를 받아 격자 x, y 좌표로 변환 (오픈소스 이용)
-    //공공 api에 요청할 때 격자 x, y 좌표로 요쳥해야 한다. 
+    //공공 api를 요청할 때 격자 x, y 좌표로 요쳥해야 한다. 
     public int[] get_xy(double[] lat_lng) {
     	double RE = 6371.00877; // 지구 반경(km)
         double GRID = 5.0; // 격자 간격(km)
@@ -329,6 +339,7 @@ public class Mqtt_client implements MqttCallback{ // implement callback 추가 &
     }
     
     //x, y 좌표 정보를 받아 위도, 경도 정보로 변환 (오픈소스 이용)
+    //web server의 Mqtt client에 publish 할 때는 위도, 경도 정보로 publish 할 것이다. 
     public double[] get_lat_lng(double[] xy) {
     	
     	double RE = 6371.00877; // 지구 반경(km)
@@ -383,7 +394,6 @@ public class Mqtt_client implements MqttCallback{ // implement callback 추가 &
     }
     
     
-    ///@@@@@@@@@@@@@@@@@
 	@Override
 	public void connectionLost(Throwable arg0) {
 		// TODO Auto-generated method stub
@@ -405,28 +415,29 @@ public class Mqtt_client implements MqttCallback{ // implement callback 추가 &
 			String[] time_lat_lng = msg.toString().split(" ");
 			
 			
-			
 			double[][] result = get_weather_data(time_lat_lng);
 			
+			// 최종 publish할 문자열
 			String pub_rst = "";
 			
-			// 각 위치의 x, y 좌표 정보를 위도, 경도 정보로 변환 (카카오 지도에 표시할 때는 위도, 경도 정보가 필요)
+			// 각 위치의 격자 x, y 좌표 정보를 위도, 경도 정보로 변환 (카카오 지도에 표시할 때는 위도, 경도 정보가 필요)
 			for (int i=0; i<result.length; i++) {
+				if (result[i][0] == 0) break;
 				double [] sub_xy = {result[i][0], result[i][1]}; 
 				double [] sub_lat_lng = get_lat_lng(sub_xy);
 				result[i][0] = sub_lat_lng[0];
 				result[i][1] = sub_lat_lng[1];
 				
-				pub_rst += "'" + result[i][0] + " " + result[i][1] + " " + result[i][2] + " " + result[i][3]
-						 	+ " " + result[i][4] + " " + result[i][5] + "'";
+				pub_rst += result[i][0] + " " + result[i][1] + " " + result[i][2] + " " + result[i][3]
+						 	+ " " + result[i][4] + " " + result[i][5] + "&";
 			}
 			
+			pub_rst = pub_rst.substring(0, pub_rst.length() - 1);		
+
 			
-			
-			
-			
+			// web server의 Mqtt client 로 '위도, 경도, 온도, 풍향, 풍속, 강수 확률' 데이터 publish
 			try {
-    			publish_data("result", pub_rst); // 위도, 경도, 온도, 풍속, 풍향, 강수확률 발행
+    			publish_data("result", pub_rst);
     		}catch (Exception e) {
 				// TODO: handle exception
     			try {
@@ -439,13 +450,6 @@ public class Mqtt_client implements MqttCallback{ // implement callback 추가 &
     	        System.out.println("Disconnected");
     	        System.exit(0);
 			}
-			
-			
-			
-			
-			
-			
-
 		}		
 	}
 }
