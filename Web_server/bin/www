@@ -37,7 +37,7 @@
  const { stringify } = require('querystring');
  var mqtt_client = mqtt.connect("mqtt://127.0.0.1")
  
- // 접속에 성공하면, 'result' 토픽을 구독.
+ // MQTT 접속에 성공하면, 'result' 토픽을 구독.
  mqtt_client.on("connect", function(){
    mqtt_client.subscribe("result");
    console.log("Subscribing result");
@@ -78,9 +78,9 @@ mqtt_client.on("message", function(topic, message){
     const data = str.split("&");
     g_socket.emit("result", data);
 
-    console.log("str : " + str);
+    console.log("--------------------------------");
     console.log(data);
-    console.log("---");
+    console.log("--------------------------------");
   }
 }); 
  

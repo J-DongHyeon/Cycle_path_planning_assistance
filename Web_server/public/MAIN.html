@@ -140,14 +140,9 @@ https://templatemo.com/tm-521-get-ready
                          setBounds();
      
                          draw_line();
-
-                         //test();
                          
                     }
                });
-     
-     //		const vv = document.getElementById('bt_input');
-     //		vv.value = '123';
      
                //지도의 크기를 출발지, 목적지에 맞게 조정
                //기존의 마커들, 커스텀 오버레이 들은 모두 지운다
@@ -194,22 +189,6 @@ https://templatemo.com/tm-521-get-ready
                     });
      
                     polylines[0].setMap(map);
-               }
-
-               function test() {
-
-                    var marker_test = new kakao.maps.LatLng(37.8812440340088, 127.730207024668);
-                    var content_test = '<span class="info-title">'
-                                  + '기온 : ' + 1 + '<br>'
-                                + '풍향 : ' + 2 +  '<br>'
-                                 + '풍속 : ' + 3 +  '<br>'
-                                + '강수확률 : ' + 4 + '</span>';
-                    var custom_test = new kakao.maps.InfoWindow({
-                         position : marker_test,
-                         content : content_test
-                    });
-
-                    custom_test.open(map);
                }
           }
      
@@ -269,6 +248,7 @@ https://templatemo.com/tm-521-get-ready
           }
      
      </script>
+
 
      <script>
 		var selectTime = document.querySelector('.select-time');
