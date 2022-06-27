@@ -16,8 +16,6 @@ import org.jsoup.nodes.Document;
 import org.jsoup.nodes.Element;
 import org.jsoup.select.Elements;
 
-import java.util.Arrays;
-
 public class Mqtt_client implements MqttCallback{ // implement callback 추가 & 필요한 메소드 정의
 	static MqttClient mqtt_client;// Mqtt Client 객체 선언
 	
@@ -43,7 +41,7 @@ public class Mqtt_client implements MqttCallback{ // implement callback 추가 &
             mqtt_client = new MqttClient(broker, clientId, persistence);// Mqtt Client 객체 초기화
             MqttConnectOptions connOpts = new MqttConnectOptions(); // 접속시 접속의 옵션을 정의하는 객체 생성
             connOpts.setCleanSession(true);
-            System.out.println("Connecting to broker: "+broker);
+            System.out.println("Connecting to broker: " + broker);
             mqtt_client.connect(connOpts); // 브로커서버에 접속
             mqtt_client.setCallback(this);// Call back option 추가
             System.out.println("Connected");
@@ -199,7 +197,6 @@ public class Mqtt_client implements MqttCallback{ // implement callback 추가 &
         			fcst_time = (Integer.parseInt(now_time.substring(0, 2)) + 1) + "00";
         			if (fcst_time.length() == 3) fcst_time = "0" + fcst_time;
         			fcst_date = String.valueOf(inow_date);
-
         		}
         	} else {
         		fcst_time = now_time.substring(0, 2) + "00";
@@ -213,7 +210,6 @@ public class Mqtt_client implements MqttCallback{ // implement callback 추가 &
         	} else if (plus_time.length() == 5) {
         		iplus_time = Integer.parseInt(plus_time.substring(0, 2));
         	}
-    		
     		int sum = Integer.parseInt(now_time.substring(0, 2)) + iplus_time;
     		
     		if (sum / 24 > 0) fcst_date = String.valueOf(inow_date + (sum / 24));
@@ -224,7 +220,7 @@ public class Mqtt_client implements MqttCallback{ // implement callback 추가 &
     	}
     
     
-    	//추출한 데이터를 담을 배열이다. (x좌표, y좌표, 1시간 기온, 풍향, 풍속, 강수 확률
+    	//추출한 데이터를 담을 배열이다. (x좌표, y좌표, 1시간 기온, 풍향, 풍속, 강수 확률)
     	double[][] result = new double [9][6]; 
     	
     	System.out.println("now_date : " + String.valueOf(inow_date) + ", now_time : " + now_time);
@@ -233,7 +229,7 @@ public class Mqtt_client implements MqttCallback{ // implement callback 추가 &
     	
 		
 		
-		
+		// 출발지와 목적지 사이의 각 위치에서 단기예보 정보를 가져온다.
     	for (int i=0; i<nx_ny.length; i++) {
     		if (nx_ny[i][0] == 0) break;
     		
@@ -246,24 +242,20 @@ public class Mqtt_client implements MqttCallback{ // implement callback 추가 &
         			+ "?serviceKey=Lcm5d0LdcOf0ikmOlbmHQkrgM%2Fe%2Bl8laBOhOhXB4n9q8cOvOFyhnFvwKclSTvc%2BK3rll9BgV0dfGF9mdgnJGQA%3D%3D"
         			+ "&pageNo=1&numOfRows=1000"
         			+ "&dataType=XML"
-        			//+ "&base_date=20220609"
-        			//+ "&base_time=2300"
         			+ "&base_date="+base_date
         			+ "&base_time="+base_time
         			+ "&nx=" + nx
         			+ "&ny=" + ny;
     				
         	Document doc = null;
-        
-    		
+
     		// Jsoup으로 API 데이터 가져오기
     		try {
     			doc = Jsoup.connect(url).get();
     		} catch (IOException e) {
     			e.printStackTrace();
     		}
-    		
-	
+
     		//받아온 xml API 중 원하는 날짜 시간의 tmp, vec, wsd, pop 데이터 추출
     		Elements elements = doc.select("item");
     		for (Element e : elements) {
@@ -405,6 +397,7 @@ public class Mqtt_client implements MqttCallback{ // implement callback 추가 &
 		// TODO Auto-generated method stub
 	}
 
+	//MQTT client가 구독하고 있는 토픽을 받았을 때 실행되는 함수
 	@Override
 	public void messageArrived(String topic, MqttMessage msg) throws Exception {
 		// TODO Auto-generated method stub
@@ -431,9 +424,7 @@ public class Mqtt_client implements MqttCallback{ // implement callback 추가 &
 				pub_rst += result[i][0] + " " + result[i][1] + " " + result[i][2] + " " + result[i][3]
 						 	+ " " + result[i][4] + " " + result[i][5] + "&";
 			}
-			
 			pub_rst = pub_rst.substring(0, pub_rst.length() - 1);		
-
 			
 			// web server의 Mqtt client 로 '위도, 경도, 온도, 풍향, 풍속, 강수 확률' 데이터 publish
 			try {
