@@ -35,12 +35,24 @@
 # 4. 시스템 구조
 
 <p align= "center">
-<img src=/docs/IMAGE/system_structure.PNG width=600 height=400></p> 
+<img src=/docs/IMAGE/system_structure.PNG width=600 height=300></p>
+
+> &nbsp;본 시스템은 가상 센서, MQTT client, MQTT Broker, Node.js, MongoDB, Web UI 로 구성된다. 사용자는 HTTP Server가 제공하는 Web UI에 원하는 자전거 경로와 시간대 정보를 입력한다. HTTP Server는 해당 경로 정보를 MongoDB 에 저장하고 Node.js의 MQTT client는 MQTT Broker 서버에 출발지, 목적지 정보와 시간대 정보를 Publish 한다. MQTT Broker 서버는 해당 Topic을 Subscribe 하는 다른 MQTT client 에게 전달한다. 해당 MQTT client는 가상 센서 (단기 예보 API) 로부터 기온, 풍향, 풍속, 강수 확률 데이터를 수집하고 MQTT Broker 서버에 Publish 한다. Node.js는 이 가상 센서 데이터를 Subscribe 하며, Web UI 지도에 사이클 경로를 표시하고 경로 상의 기온, 풍향, 풍속, 강수 확률 데이터를 나타낸다.
 
 ------------------------------------------
 
 # 5. 동작 과정
+-- sub 사진
+> &nbsp;시스템의 전반적인 동작 과정은 다음과 같다. 먼저, Java로 구현한 MQTT client는 MQTT Broker 서버에게 출발지, 목적지 정보와 시간대 정보 Topic을 구독 요청하고, 구독 요청을 받은 MQTT Broker 서버는 이 MQTT client를 해당 Topic의 구독자 리스트에 추가한다. Topic 명은 'path' 이다. Node.js의 MQTT client는 MQTT Broker 서버에게 사이클 경로 상의 기온, 풍향, 풍속, 강수 확률 Topic의 구독을 요청하고, 구독 요청을 받은 MQTT Broker 서버는 이 MQTT client를 해당 Topic의 구독자 리스트에 추가한다. Topic명은 'result' 이다.
 
+-- 지도 사진
+> &nbsp;Web UI에는 출발지, 목적지를 입력하는 텍스트 박스와 지도가 나타나 있다. 사용자가 원하는 출발지, 목적지와 시간대를 입력하면 지도에 사이클 경로가 표시된다.
+
+-- Mongodb 사진
+> &nbsp;사용자가 원하는 사이클 경로를 입력하면 Node.js의 HTTP Server는 HTML 페이지로부터 출발지와 목적지, 시간대 정보를 socket으로 전송받는다. 그리고 출발지, 목적지 검색 기록을 MongoDB에 저장한다. 
+
+-- pub 사진, 지도에 마커 있는 사진
+> &nbsp;Node.js의 MQTT client는 출발지, 목적지 정보와 시간대 정보를 담은 Topic 'path' 를 Publish 한다. MQTT Broker는 해당 Topic을 구독하는 MQTT client에게 전송한다. 'path' Topic을 받은 MQTT client는 출발지와 목적지 간의 경로를 일정한 간격으로 나누고, 사용자가 요청한 시간대의 각 위치에서의 기온, 풍향, 풍속, 강수 확률 데이터를 가상 센서 (단기 예보 API) 로부터 수집한다. 그리고 이 데이터를 담은 Topic 'result' 를 Publish 한다. MQTT Broker는 해당 Topic을 구독하는 Node.js의 MQTT client에게 전송한다. Node.js는 사이클 경로 상의 각 위치에서의 날씨 데이터를 받으면 이를 한눈에 보기 쉽게 HTML 페이지의 지도에 마커로 표시한다.
 ------------------------------------------
 
 # 6. 실행 결과
