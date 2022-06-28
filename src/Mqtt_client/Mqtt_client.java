@@ -218,6 +218,68 @@ public class Mqtt_client implements MqttCallback{ // implement callback 추가 &
     		fcst_time = String.valueOf(sum % 24) + "00";
     		if (fcst_time.length() == 3) fcst_time = "0" + fcst_time;
     	}
+    	
+    	// 데이터 요청 날짜가 (fcst_date) 달의 말일을 넘어가면 조정해 주어야 한다.
+    	int fcst_year = Integer.parseInt(fcst_date.substring(0, 4));
+    	int fcst_month = Integer.parseInt(fcst_date.substring(4, 6));
+    	int fcst_day = Integer.parseInt(fcst_date.substring(6, 8));
+    	
+    	// 1, 3, 5, 7, 8, 10, 12월 달은 31일 까지만 있다.
+    	if (fcst_month == 1 || fcst_month == 3 || fcst_month == 5 || fcst_month == 7 || fcst_month == 8 ||
+    			fcst_month == 10 || fcst_month == 12)
+    	{
+    		if (fcst_day > 31)
+    		{
+    			fcst_month++;
+    			if (fcst_month > 12)
+    			{
+    				fcst_year++;
+    				fcst_month = 1;
+    			}
+    			
+    			fcst_day %= 31;
+    		}
+    	} else
+    	{
+    		// 2월 달은 윤년에는 29일 까지, 평년에는 28일 까지만 있다.
+    		if (fcst_month == 2)
+    		{
+    			if ((fcst_year - 2020) % 4 == 0)
+    			{
+    				if (fcst_day > 29)
+    				{
+    					fcst_month++;
+    					fcst_day %= 29;
+    				}
+    			} else
+    			{
+    				if (fcst_day > 28)
+    				{
+    					fcst_month++;
+    					fcst_day %= 28;
+    				}
+    			}
+    		} 
+    		// 4, 6, 9, 11월 달은 30일 까지만 있다.
+    		else 
+    		{
+    			if (fcst_day > 30)
+        		{
+        			fcst_month++;
+        			fcst_day %= 30;
+        		}	
+    		}
+    	}
+    	
+    	String str_month;
+    	if (fcst_month < 10) str_month = "0" +  String.valueOf(fcst_month);
+    	else str_month = String.valueOf(fcst_month);
+    	
+       	String str_day;
+    	if (fcst_day < 10) str_day = "0" +  String.valueOf(fcst_day);
+    	else str_day = String.valueOf(fcst_day);
+    	
+    	fcst_date = String.valueOf(fcst_year) + str_month + str_day;
     
     
     	//추출한 데이터를 담을 배열이다. (x좌표, y좌표, 1시간 기온, 풍향, 풍속, 강수 확률)
