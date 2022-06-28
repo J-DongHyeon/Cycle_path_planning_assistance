@@ -34,6 +34,9 @@
 
 # 4. 시스템 구조
 
+<p align= "center">
+<img src=/docs/IMAGE/system_structure.PNG width=600 height=400></p> 
+
 ------------------------------------------
 
 # 5. 동작 과정
