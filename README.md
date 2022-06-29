@@ -55,7 +55,7 @@
 > &nbsp;시스템의 전반적인 동작 과정은 다음과 같다. 먼저, Java로 구현한 MQTT client는 MQTT Broker 서버에게 출발지, 목적지 정보와 시간대 정보 Topic을 구독 요청하고, 구독 요청을 받은 MQTT Broker 서버는 이 MQTT client를 해당 Topic의 구독자 리스트에 추가한다. Topic 명은 'path' 이다. Node.js의 MQTT client는 MQTT Broker 서버에게 사이클 경로 상의 기온, 풍향, 풍속, 강수 확률 Topic의 구독을 요청하고, 구독 요청을 받은 MQTT Broker 서버는 이 MQTT client를 해당 Topic의 구독자 리스트에 추가한다. Topic명은 'result' 이다.
 </br></br>
 
-<img src=/docs/IMAGE/map_img1.jpg width=480 height=250> <img src=/docs/IMAGE/map_img2.jpg width=480 height=250>
+<img src=/docs/IMAGE/map_img1.jpg width=460 height=250> <img src=/docs/IMAGE/map_img2.jpg width=460 height=250>
 
 > &nbsp;Web UI에는 출발지, 목적지를 입력하는 텍스트 박스와 지도가 나타나 있다. 사용자가 원하는 출발지, 목적지와 시간대를 입력하면 지도에 사이클 경로가 표시된다.
 </br></br>
