@@ -22,7 +22,7 @@
 # 2. 개발환경 & 사용한 API
 
 <p align= "center">
-<img src=/docs/IMAGE/software_img.PNG width=700 height=220></p> 
+<img src=/docs/IMAGE/software_img.PNG width=700 height=200></p> 
 
 * Web Server - IoT 네트워크에서 주로 사용되는 Node.js를 기반으로, express 웹 프레임워크를 이용하여 개발하였다. 
 * MQTT - IoT 네트워크 상에서 날씨 데이터를 MQTT 프로토콜로 송수신 하였다. MQTT 오픈소스로 주로 사용되는 Mosquitto 를 설치하여 사용하였다.
