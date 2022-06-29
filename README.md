@@ -80,7 +80,8 @@
 
 # 6. 실행 결과
 
--- 실행 동영상
+<p align="center">
+<img src="/docs/IMAGE/result.gif" width="900" height ="280"></p>  
 
 ------------------------------------------
 
