@@ -56,7 +56,7 @@
 </br></br>
 
 <p align= "center">
-<img src=/docs/IMAGE/map_img1.jpg width=350 height=250> <img src=/docs/IMAGE/map_img2.jpg width=350 height=250>
+<img src=/docs/IMAGE/map_img1.jpg width=350 height=250> &nbsp;&nbsp;&nbsp;&nbsp; <img src=/docs/IMAGE/map_img2.jpg width=350 height=250>
 </p>
 
 > &nbsp;Web UI에는 출발지, 목적지를 입력하는 텍스트 박스와 지도가 나타나 있다. 사용자가 원하는 출발지, 목적지와 시간대를 입력하면 지도에 사이클 경로가 표시된다.
