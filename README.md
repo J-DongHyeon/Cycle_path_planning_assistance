@@ -55,15 +55,27 @@
 > &nbsp;시스템의 전반적인 동작 과정은 다음과 같다. 먼저, Java로 구현한 MQTT client는 MQTT Broker 서버에게 출발지, 목적지 정보와 시간대 정보 Topic을 구독 요청하고, 구독 요청을 받은 MQTT Broker 서버는 이 MQTT client를 해당 Topic의 구독자 리스트에 추가한다. Topic 명은 'path' 이다. Node.js의 MQTT client는 MQTT Broker 서버에게 사이클 경로 상의 기온, 풍향, 풍속, 강수 확률 Topic의 구독을 요청하고, 구독 요청을 받은 MQTT Broker 서버는 이 MQTT client를 해당 Topic의 구독자 리스트에 추가한다. Topic명은 'result' 이다.
 </br></br>
 
-<img src=/docs/IMAGE/map_img1.jpg width=500 height=250> &nbsp; <img src=/docs/IMAGE/map_img2.jpg width=500 height=250>
+<img src=/docs/IMAGE/map_img1.jpg width=500 height=250> <img src=/docs/IMAGE/map_img2.jpg width=500 height=250>
 
 > &nbsp;Web UI에는 출발지, 목적지를 입력하는 텍스트 박스와 지도가 나타나 있다. 사용자가 원하는 출발지, 목적지와 시간대를 입력하면 지도에 사이클 경로가 표시된다.
+</br></br>
 
--- Mongodb 사진
-> &nbsp;사용자가 원하는 사이클 경로를 입력하면 Node.js의 HTTP Server는 HTML 페이지로부터 출발지와 목적지, 시간대 정보를 socket으로 전송받는다. 그리고 출발지, 목적지 검색 기록을 MongoDB에 저장한다. 
+<p align= "center">
+<img src=/docs/IMAGE/mongodb_img.png width=600 height=250></p>
 
--- pub 사진, 지도에 마커 있는 사진
-> &nbsp;Node.js의 MQTT client는 출발지, 목적지 정보와 시간대 정보를 담은 Topic 'path' 를 Publish 한다. MQTT Broker는 해당 Topic을 구독하는 MQTT client에게 전송한다. 'path' Topic을 받은 MQTT client는 출발지와 목적지 간의 경로를 일정한 간격으로 나누고, 사용자가 요청한 시간대의 각 위치에서의 기온, 풍향, 풍속, 강수 확률 데이터를 가상 센서 (단기 예보 API) 로부터 수집한다. 그리고 이 데이터를 담은 Topic 'result' 를 Publish 한다. MQTT Broker는 해당 Topic을 구독하는 Node.js의 MQTT client에게 전송한다. Node.js는 사이클 경로 상의 각 위치에서의 날씨 데이터를 받으면 이를 한눈에 보기 쉽게 HTML 페이지의 지도에 마커로 표시한다.
+> &nbsp;사용자가 원하는 사이클 경로를 입력하면 Node.js의 HTTP Server는 HTML 페이지로부터 출발지와 목적지, 시간대 정보를 socket으로 전송받는다. 그리고 출발지, 목적지 검색 기록을 MongoDB에 저장한다.
+</br></br>
+
+<p align= "center">
+<img src=/docs/IMAGE/publish_img.PNG width=600 height=250></p>
+
+> &nbsp;Node.js의 MQTT client는 출발지, 목적지 정보와 시간대 정보를 담은 Topic 'path' 를 Publish 한다. MQTT Broker는 해당 Topic을 구독하는 MQTT client에게 전송한다. 'path' Topic을 받은 MQTT client는 출발지와 목적지 간의 경로를 일정한 간격으로 나누고, 사용자가 요청한 시간대의 각 위치에서의 기온, 풍향, 풍속, 강수 확률 데이터를 가상 센서 (단기 예보 API) 로부터 수집한다. 그리고 이 데이터를 담은 Topic 'result' 를 Publish 한다. MQTT Broker는 해당 Topic을 구독하는 Node.js의 MQTT client에게 전송한다.
+</br></br>
+
+<p align= "center">
+<img src=/docs/IMAGE/marker_img.jpg width=600 height=250></p>
+
+> Node.js는 사이클 경로 상의 각 위치에서의 날씨 데이터를 받으면 이를 한눈에 보기 쉽게 HTML 페이지의 지도에 마커로 표시한다.
 ------------------------------------------
 
 # 6. 실행 결과
